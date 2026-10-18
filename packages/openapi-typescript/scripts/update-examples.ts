@@ -66,4 +66,4 @@ async function generateSchemas() {
   process.exit(0); // helps process close in npm script
 }
 
-generateSchemas();
+await generateSchemas();

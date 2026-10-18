@@ -59,4 +59,4 @@ export async function download() {
   process.exit(0); // helps process close in npm script
 }
 
-download();
+await download();

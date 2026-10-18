@@ -133,7 +133,7 @@ export function getEntries<T>(
 export function resolveRef<T>(
   schema: any,
   $ref: string,
-  { silent = false, visited = [] }: { silent: boolean; visited?: string[] },
+  { silent, visited = [] }: { silent: boolean; visited?: string[] },
 ): T | undefined {
   const { pointer } = parseRef($ref);
   if (!pointer.length) {

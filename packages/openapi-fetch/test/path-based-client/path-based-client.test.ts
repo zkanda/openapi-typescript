@@ -73,7 +73,7 @@ describe("createPathBasedClient", () => {
         expect(error).toBeUndefined();
       } else {
         // @ts-expect-error
-        data.not_a_blogpost_property;
+        void data.not_a_blogpost_property;
         // Check typing of result value.
         expect(data.title).toBe("Blog post title");
       }

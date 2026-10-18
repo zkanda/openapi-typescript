@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import { createObservedClient } from "../helpers.js";
-import type { components, paths } from "./schemas/get.js";
+import type { paths } from "./schemas/get.js";
 
 describe("GET", () => {
   test("sends correct method", async () => {

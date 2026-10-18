@@ -30,7 +30,7 @@ export default function createClient(clientOptions) {
     bodySerializer: globalBodySerializer,
     pathSerializer: globalPathSerializer,
     headers: baseHeaders,
-    requestInitExt = undefined,
+    requestInitExt,
     ...baseOptions
   } = { ...clientOptions };
   requestInitExt = supportsRequestInitExt() ? requestInitExt : undefined;
@@ -87,7 +87,7 @@ export default function createClient(clientOptions) {
             // bodySerializer() needs all headers so we aren’t dropping ones set by the user, however,
             // the result of this ALSO sets the lowest-priority content-type header. So we re-merge below,
             // setting the content-type at the very beginning to be overwritten.
-            // Lastly, based on the way headers work, it’s not a simple “present-or-not” check becauase null intentionally un-sets headers.
+            // Lastly, based on the way headers work, it’s not a simple “present-or-not” check becauase null intentionally un-sets headers.
             mergeHeaders(baseHeaders, headers, params.header),
           );
     const finalHeaders = mergeHeaders(

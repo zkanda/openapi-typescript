@@ -10,7 +10,6 @@ const IGNORE = [
   "pnpm-lock.yaml",
   "packages/openapi-fetch/examples/**",
   "packages/openapi-fetch/test/**/schemas/**",
-  "packages/openapi-fetch/test/bench/**/*.min.js",
   "packages/openapi-typescript/examples/**",
   "packages/openapi-typescript/test/fixtures/**",
 ];
@@ -29,6 +28,13 @@ export default defineConfig({
       "no-console": "error",
       "vite-plus/prefer-vite-plus-imports": "error",
     },
+    overrides: [
+      {
+        // this rule needs strictNullChecks, which this test project disables on purpose
+        files: ["packages/openapi-fetch/test/no-strict-null-checks/**"],
+        rules: { "typescript/no-useless-default-assignment": "off" },
+      },
+    ],
   },
   fmt: {
     ignorePatterns: [...IGNORE, "**/*.md", "**/*.yaml", "**/*.yml", "**/package.json"],

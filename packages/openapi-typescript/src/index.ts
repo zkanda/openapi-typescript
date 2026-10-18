@@ -48,7 +48,7 @@ export default async function openapiTS(
   }
 
   const schema = await loadSchema(source, {
-    cwd: options.cwd instanceof URL ? options.cwd : new URL(`file://${options.cwd ?? process.cwd()}/`),
+    cwd: options.cwd instanceof URL ? options.cwd : new URL(`file://${String(options.cwd ?? process.cwd())}/`),
     silent: options.silent ?? false,
   });
 

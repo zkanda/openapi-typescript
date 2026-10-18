@@ -9,12 +9,12 @@
   },
   "packageManager": "pnpm@10.30.3",
   "scripts": {
-    "build": "vp run -r build",
-    "lint": "vp run -r lint",
-    "dev": "vp run -r --parallel dev",
+    "build": "vp run --filter \"./packages/*\" build",
+    "lint": "vp run --filter \"./packages/*\" lint",
+    "dev": "vp run --filter \"./packages/*\" --parallel dev",
     "format": "vp fmt",
-    "test": "vp run -r build && vp run -r test",
-    "test-e2e": "vp run -r build && vp run -r test-e2e",
+    "test": "vp run --filter \"./packages/*\" build && vp run --filter \"./packages/*\" test",
+    "test-e2e": "vp run --filter \"./packages/*\" build && vp run --filter \"./packages/*\" test-e2e",
     "size": "size-limit",
     "version": "pnpm run build && changeset version && pnpm i"
   },

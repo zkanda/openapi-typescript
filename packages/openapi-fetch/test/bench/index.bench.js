@@ -1,10 +1,7 @@
-import axios from "axios";
 import { createApiFetchClient } from "feature-fetch";
 import { Fetcher } from "openapi-typescript-fetch";
-import superagent from "superagent";
 import { afterAll, test, describe, vi } from "vite-plus/test";
 import createClient, { createPathBasedClient } from "../../dist/index.mjs";
-import * as openapiTSCodegen from "./openapi-typescript-codegen.min.js";
 
 const BASE_URL = "https://api.test.local";
 
@@ -45,21 +42,11 @@ describe("setup", () => {
     }).run();
   });
 
-  test("axios", async ({ bench }) => {
-    await bench("axios", async () => {
-      axios.create({
-        baseURL: BASE_URL,
-      });
-    }).run();
-  });
-
   test("feature-fetch", async ({ bench }) => {
     await bench("feature-fetch", async () => {
       createApiFetchClient({ prefixUrl: BASE_URL });
     }).run();
   });
-
-  // superagent: N/A
 });
 
 describe("get (only URL)", () => {
@@ -70,9 +57,6 @@ describe("get (only URL)", () => {
     baseUrl: BASE_URL,
   });
   const openapiTSFetchGET = openapiTSFetch.path("/url").method("get").create();
-  const axiosInstance = axios.create({
-    baseURL: BASE_URL,
-  });
   const featureFetch = createApiFetchClient({ prefixUrl: BASE_URL });
 
   test("openapi-fetch", async ({ bench }) => {
@@ -90,24 +74,6 @@ describe("get (only URL)", () => {
   test("openapi-typescript-fetch", async ({ bench }) => {
     await bench("openapi-typescript-fetch", async () => {
       await openapiTSFetchGET();
-    }).run();
-  });
-
-  test("openapi-typescript-codegen", async ({ bench }) => {
-    await bench("openapi-typescript-codegen", async () => {
-      await openapiTSCodegen.PullsService.pullsGet("test1", "test2", "test3");
-    }).run();
-  });
-
-  test("axios", async ({ bench }) => {
-    await bench("axios", async () => {
-      await axiosInstance.get("/url");
-    }).run();
-  });
-
-  test("superagent", async ({ bench }) => {
-    await bench("superagent", async () => {
-      await superagent.get(`${BASE_URL}/url`);
     }).run();
   });
 
@@ -133,9 +99,6 @@ describe("get (headers)", () => {
     init: { headers: { "x-base-header": 123 } },
   });
   const openapiTSFetchGET = openapiTSFetch.path("/url").method("get").create();
-  const axiosInstance = axios.create({
-    baseURL: BASE_URL,
-  });
   const featureFetch = createApiFetchClient({
     prefixUrl: BASE_URL,
     headers: { "x-base-header": "123" },
@@ -162,26 +125,6 @@ describe("get (headers)", () => {
       await openapiTSFetchGET(null, {
         headers: { "x-header-1": 123, "x-header-2": 456 },
       });
-    }).run();
-  });
-
-  test("openapi-typescript-codegen", async ({ bench }) => {
-    await bench("openapi-typescript-codegen", async () => {
-      await openapiTSCodegen.PullsService.pullsGet("test1", "test2", "test3");
-    }).run();
-  });
-
-  test("axios", async ({ bench }) => {
-    await bench("axios", async () => {
-      await axiosInstance.get("/url", {
-        headers: { "x-header-1": 123, "x-header-2": 456 },
-      });
-    }).run();
-  });
-
-  test("superagent", async ({ bench }) => {
-    await bench("superagent", async () => {
-      await superagent.get(`${BASE_URL}/url`).set("x-header-1", 123).set("x-header-2", 456);
     }).run();
   });
 

@@ -112,9 +112,11 @@ export function addJSDocComment(schemaObject: AnnotatedSchemaObject, member: Mem
     if (schemaObject[field] === "" && !allowEmptyString) {
       continue;
     }
+    const value = schemaObject[field];
+    // parsed JSON/YAML: anything that isn’t an object is a primitive
     const serialized =
-      typeof schemaObject[field] === "object" ? JSON.stringify(schemaObject[field], null, 2) : schemaObject[field];
-    output.push(`@${field} ${String(serialized).trim().replace(LB_RE, "\n *     ")}`);
+      typeof value === "object" ? JSON.stringify(value, null, 2) : String(value as string | number | boolean);
+    output.push(`@${field} ${serialized.trim().replace(LB_RE, "\n *     ")}`);
   }
 
   if (Array.isArray(schemaObject.examples)) {

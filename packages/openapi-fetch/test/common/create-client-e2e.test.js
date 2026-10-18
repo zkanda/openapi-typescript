@@ -10,10 +10,8 @@ const pki = forge.pki;
 
 const genCACert = async (opts = {}) => {
   const options = {
-    ...{
-      commonName: "Testing CA - DO NOT TRUST",
-      bits: 2048,
-    },
+    commonName: "Testing CA - DO NOT TRUST",
+    bits: 2048,
     ...opts,
   };
 
