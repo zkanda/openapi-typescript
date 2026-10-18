@@ -1,26 +1,60 @@
-import type { OasRef, Referenced } from "@redocly/openapi-core";
-import { parseRef } from "@redocly/openapi-core/lib/ref-utils.js";
-import ts, { type LiteralTypeNode, type TypeLiteralNode } from "typescript";
-import type { ParameterObject } from "../types.js";
+import type { ParameterObject, ReferenceObject } from "../types.js";
+import { parseRef } from "./utils.js";
+
+/**
+ * Minimal TypeScript type AST. Only what openapi-typescript emits is modeled,
+ * and the printer reproduces the formatting of the TypeScript compiler’s printer
+ * (4-space indent, multi-line type literals and tuples) so output stays stable.
+ */
+export type Keyword = "boolean" | "never" | "null" | "number" | "string" | "undefined" | "unknown";
+
+export type TypeNode =
+  | { kind: "keyword"; name: Keyword }
+  /** literal printed verbatim (e.g. `"foo"`, `1`, `-1`, `true`) */
+  | { kind: "literal"; text: string }
+  /** type reference, e.g. `components` or `Record<string, never>` */
+  | { kind: "ref"; name: string; args?: TypeNode[] }
+  /** indexed access, e.g. `T["index"]` */
+  | { kind: "indexed"; object: TypeNode; index: string }
+  | { kind: "array"; element: TypeNode }
+  | { kind: "tuple"; elements: TypeNode[] }
+  | { kind: "union"; types: TypeNode[] }
+  | { kind: "intersection"; types: TypeNode[] }
+  | { kind: "object"; members: Member[] };
+
+/** Property signature (or index signature, if `indexSignature` is set) */
+export interface Member {
+  /** printed property key (identifier, number, or quoted string; see tsPropertyIndex()) */
+  name: string;
+  type: TypeNode;
+  optional?: boolean;
+  readonly?: boolean;
+  /** if set, print as `[indexSignature: string]: type` */
+  indexSignature?: string;
+  /** comment body, without the surrounding `/*` and `*\/` */
+  comment?: string;
+}
+
+export type Declaration =
+  | { kind: "interface"; name: string; members: Member[] }
+  | { kind: "alias"; name: string; type: TypeNode }
+  /** pre-formatted TypeScript */
+  | { kind: "raw"; name: string; text: string };
+
+export type Node = TypeNode | Declaration;
 
 export const JS_PROPERTY_INDEX_RE = /^[A-Za-z_$][A-Za-z_$0-9]*$/;
-export const JS_ENUM_INVALID_CHARS_RE = /[^A-Za-z_$0-9]+(.)?/g;
-export const JS_PROPERTY_INDEX_INVALID_CHARS_RE = /[^A-Za-z_$0-9]+/g;
-export const SPECIAL_CHARACTER_MAP: Record<string, string> = {
-  "+": "Plus",
-  // Add more mappings as needed
-};
 
-export const BOOLEAN = ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
-export const FALSE = ts.factory.createLiteralTypeNode(ts.factory.createFalse());
-export const NEVER = ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
-export const NULL = ts.factory.createLiteralTypeNode(ts.factory.createNull());
-export const NUMBER = ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
-export const QUESTION_TOKEN = ts.factory.createToken(ts.SyntaxKind.QuestionToken);
-export const STRING = ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-export const TRUE = ts.factory.createLiteralTypeNode(ts.factory.createTrue());
-export const UNDEFINED = ts.factory.createKeywordTypeNode(ts.SyntaxKind.UndefinedKeyword);
-export const UNKNOWN = ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+const keyword = (name: Keyword): TypeNode => ({ kind: "keyword", name });
+export const BOOLEAN = keyword("boolean");
+export const NEVER = keyword("never");
+export const NULL = keyword("null");
+export const NUMBER = keyword("number");
+export const STRING = keyword("string");
+export const UNDEFINED = keyword("undefined");
+export const UNKNOWN = keyword("unknown");
+export const TRUE: TypeNode = { kind: "literal", text: "true" };
+export const FALSE: TypeNode = { kind: "literal", text: "false" };
 
 const LB_RE = /\r?\n/g;
 const COMMENT_RE = /\*\//g;
@@ -45,7 +79,7 @@ export interface AnnotatedSchemaObject {
  * @see {comment} for output examples
  * @returns void if not comments or jsdoc format comment string
  */
-export function addJSDocComment(schemaObject: AnnotatedSchemaObject, node: ts.PropertySignature): void {
+export function addJSDocComment(schemaObject: AnnotatedSchemaObject, member: Member): void {
   if (!schemaObject || typeof schemaObject !== "object" || Array.isArray(schemaObject)) {
     return;
   }
@@ -107,69 +141,22 @@ export function addJSDocComment(schemaObject: AnnotatedSchemaObject, node: ts.Pr
   }
 
   // attach comment if it has content
-
   if (output.length) {
     // Check if any output item contains multi-line content (has internal line breaks)
     const hasMultiLineContent = output.some((item) => item.includes("\n"));
 
-    let text =
+    const text =
       output.length === 1 && !hasMultiLineContent ? `* ${output.join("\n")} ` : `*\n * ${output.join("\n * ")}\n `;
-    text = text.replace(COMMENT_RE, "*\\/"); // prevent inner comments from leaking
-
-    ts.addSyntheticLeadingComment(
-      /* node               */ node,
-      /* kind               */ ts.SyntaxKind.MultiLineCommentTrivia, // note: MultiLine just refers to a "/* */" comment
-      /* text               */ text,
-      /* hasTrailingNewLine */ true,
-    );
+    member.comment = text.replace(COMMENT_RE, "*\\/"); // prevent inner comments from leaking
   }
 }
 
-function isOasRef<T>(obj: Referenced<T>): obj is OasRef {
-  return Boolean((obj as OasRef).$ref);
-}
-type OapiRefResolved = Referenced<ParameterObject>;
-
-function isParameterObject(obj: OapiRefResolved | undefined): obj is ParameterObject {
-  return Boolean(obj && !isOasRef(obj) && obj.in);
+function isParameterObject(obj: ParameterObject | ReferenceObject | undefined): obj is ParameterObject {
+  return Boolean(obj && !("$ref" in obj) && obj.in);
 }
 
-function addIndexedAccess(node: ts.TypeNode, ...segments: readonly string[]) {
-  return segments.reduce<ts.TypeNode>((acc, segment) => {
-    return ts.factory.createIndexedAccessTypeNode(
-      acc,
-      ts.factory.createLiteralTypeNode(
-        typeof segment === "number"
-          ? ts.factory.createNumericLiteral(segment)
-          : ts.factory.createStringLiteral(segment),
-      ),
-    );
-  }, node);
-}
-
-/**
- * Wrap a type with Extract<T, { propertyName: unknown }> to narrow a union type
- * before accessing a property that only exists on some variants.
- */
-function wrapWithExtract(type: ts.TypeNode, propertyName: string): ts.TypeNode {
-  return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("Extract"), [
-    type,
-    ts.factory.createTypeLiteralNode([
-      ts.factory.createPropertySignature(
-        /* modifiers     */ undefined,
-        /* name          */ ts.factory.createIdentifier(propertyName),
-        /* questionToken */ undefined,
-        /* type          */ ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-      ),
-    ]),
-  ]);
-}
-
-export interface OapiRefOptions {
-  /** Whether to wrap with FlattenedDeepRequired<> (default: false) */
-  deep?: boolean;
-  /** Array of property names to wrap with Extract<> when accessing */
-  extractProperties?: string[];
+function addIndexedAccess(node: TypeNode, ...segments: readonly string[]): TypeNode {
+  return segments.reduce<TypeNode>((acc, segment) => ({ kind: "indexed", object: acc, index: segment }), node);
 }
 
 /**
@@ -188,18 +175,14 @@ export interface OapiRefOptions {
  *       them according to their type; path, query, header, etc… so in these cases we
  *       must check the parameter definition to determine the how to index into
  *       the openapi-typescript type.
- *   * Union variant properties (oneOf/anyOf)
- *       When accessing properties that may only exist on some variants of a union type,
- *       we use Extract<> to narrow the type before each property access.
  **/
-export function oapiRef(path: string, resolved?: OapiRefResolved, options: OapiRefOptions = {}): ts.TypeNode {
+export function oapiRef(path: string, resolved?: ParameterObject | ReferenceObject): TypeNode {
   const { pointer } = parseRef(path);
   if (pointer.length === 0) {
     throw new Error(`Error parsing $ref: ${path}. Is this a valid $ref?`);
   }
 
   const parametersObject = isParameterObject(resolved);
-  const extractSet = new Set(options.extractProperties ?? []);
 
   // Initial segments are handled in a fixed , then remaining segments are treated
   // according to heuristics based on the initial segments
@@ -207,16 +190,9 @@ export function oapiRef(path: string, resolved?: OapiRefResolved, options: OapiR
   const leadingSegments = pointer.slice(1, 3);
   const restSegments = pointer.slice(3);
 
-  const leadingType = addIndexedAccess(
-    ts.factory.createTypeReferenceNode(
-      ts.factory.createIdentifier(
-        options.deep ? `FlattenedDeepRequired<${String(initialSegment)}>` : String(initialSegment),
-      ),
-    ),
-    ...leadingSegments,
-  );
+  const leadingType = addIndexedAccess({ kind: "ref", name: String(initialSegment) }, ...leadingSegments);
 
-  return restSegments.reduce<ts.TypeNode>((acc, segment, index, original) => {
+  return restSegments.reduce<TypeNode>((acc, segment, index, original) => {
     // Skip `properties` items when in the middle of the pointer
     // See: https://github.com/openapi-ts/openapi-typescript/issues/1742
     if (segment === "properties") {
@@ -227,270 +203,55 @@ export function oapiRef(path: string, resolved?: OapiRefResolved, options: OapiR
       return addIndexedAccess(acc, resolved.in, resolved.name);
     }
 
-    // If this segment is in the extractProperties list,
-    // wrap the current type with Extract<T, { segment: unknown }> before accessing.
-    // This narrows union types to variants that have this property.
-    if (extractSet.has(segment)) {
-      const narrowedType = wrapWithExtract(acc, segment);
-      return addIndexedAccess(narrowedType, segment);
-    }
-
     return addIndexedAccess(acc, segment);
   }, leadingType);
-}
-
-export interface AstToStringOptions {
-  fileName?: string;
-  sourceText?: string;
-  formatOptions?: ts.PrinterOptions;
-}
-
-/** Convert TypeScript AST to string */
-export function astToString(
-  ast: ts.Node | ts.Node[] | ts.TypeElement | ts.TypeElement[],
-  options?: AstToStringOptions,
-): string {
-  const sourceFile = ts.createSourceFile(
-    options?.fileName ?? "openapi-ts.ts",
-    options?.sourceText ?? "",
-    ts.ScriptTarget.ESNext,
-    false,
-    ts.ScriptKind.TS,
-  );
-
-  // @ts-expect-error it’s OK to overwrite statements once
-  sourceFile.statements = ts.factory.createNodeArray(Array.isArray(ast) ? ast : [ast]);
-
-  const printer = ts.createPrinter({
-    newLine: ts.NewLineKind.LineFeed,
-    removeComments: false,
-    ...options?.formatOptions,
-  });
-  return printer.printFile(sourceFile);
-}
-
-/** Convert an arbitrary string to TS (assuming it’s valid) */
-export function stringToAST(source: string): unknown[] {
-  return ts.createSourceFile(
-    /* fileName        */ "stringInput",
-    /* sourceText      */ source,
-    /* languageVersion */ ts.ScriptTarget.ESNext,
-    /* setParentNodes  */ undefined,
-    /* scriptKind      */ undefined,
-  ).statements as any;
 }
 
 /**
  * Deduplicate simple primitive types from an array of nodes
  * Note: won’t deduplicate complex types like objects
  */
-export function tsDedupe(types: ts.TypeNode[]): ts.TypeNode[] {
-  const encounteredTypes = new Set<number>();
-  const filteredTypes: ts.TypeNode[] = [];
+export function tsDedupe(types: TypeNode[]): TypeNode[] {
+  const encounteredTypes = new Set<Keyword>();
+  const filteredTypes: TypeNode[] = [];
   for (const t of types) {
-    // only mark for deduplication if this is not a const ("text" means it is a const)
-    if (!("text" in ((t as LiteralTypeNode).literal ?? t))) {
-      const { kind } = (t as LiteralTypeNode).literal ?? t;
-      if (encounteredTypes.has(kind)) {
+    if (t.kind === "keyword" && tsIsPrimitive(t)) {
+      if (encounteredTypes.has(t.name)) {
         continue;
       }
-      if (tsIsPrimitive(t)) {
-        encounteredTypes.add(kind);
-      }
+      encounteredTypes.add(t.name);
     }
     filteredTypes.push(t);
   }
   return filteredTypes;
 }
 
-export const enumCache = new Map<string, ts.EnumDeclaration>();
-
-/** Create a TS enum (with sanitized name and members) */
-export function tsEnum(
-  name: string,
-  members: (string | number)[],
-  metadata?: { name?: string; description?: string | null }[],
-  options?: { export?: boolean; shouldCache?: boolean },
-) {
-  let enumName = sanitizeMemberName(name);
-  enumName = `${enumName[0].toUpperCase()}${enumName.substring(1)}`;
-  let key = "";
-  if (options?.shouldCache) {
-    key = `${members
-      .slice(0)
-      .sort()
-      .map((v, i) => {
-        return `${metadata?.[i]?.name ?? String(v)}:${metadata?.[i]?.description || ""}`;
-      })
-      .join(",")}`;
-    if (enumCache.has(key)) {
-      return enumCache.get(key) as ts.EnumDeclaration;
-    }
-  }
-  const enumDeclaration = ts.factory.createEnumDeclaration(
-    /* modifiers */ options ? tsModifiers({ export: options.export ?? false }) : undefined,
-    /* name      */ enumName,
-    /* members   */ members.map((value, i) => tsEnumMember(value, metadata?.[i])),
-  );
-  options?.shouldCache && enumCache.set(key, enumDeclaration);
-  return enumDeclaration;
-}
-
-/** Create an exported TS array literal expression  */
-export function tsArrayLiteralExpression(
-  name: string,
-  elementType: ts.TypeNode,
-  values: (string | number)[],
-  options?: { export?: boolean; readonly?: boolean; injectFooter?: ts.Node[] },
-) {
-  let variableName = sanitizeMemberName(name);
-  variableName = `${variableName[0].toLowerCase()}${variableName.substring(1)}`;
-
-  if (
-    options?.injectFooter &&
-    !options.injectFooter.some(
-      (node) => ts.isTypeAliasDeclaration(node) && node?.name?.escapedText === "FlattenedDeepRequired",
-    )
-  ) {
-    const helper = stringToAST(
-      "type FlattenedDeepRequired<T> = { [K in keyof T]-?: FlattenedDeepRequired<T[K] extends unknown[] | undefined | null ? Extract<T[K], unknown[]>[number] : T[K]>; };",
-    )[0] as any;
-    options.injectFooter.push(helper);
-  }
-
-  const arrayType = options?.readonly
-    ? tsReadonlyArray(elementType, options.injectFooter)
-    : ts.factory.createArrayTypeNode(elementType);
-
-  return ts.factory.createVariableStatement(
-    options ? tsModifiers({ export: options.export ?? false }) : undefined,
-    ts.factory.createVariableDeclarationList(
-      [
-        ts.factory.createVariableDeclaration(
-          variableName,
-          undefined,
-          arrayType,
-          ts.factory.createArrayLiteralExpression(
-            values.map((value) => {
-              if (typeof value === "number") {
-                if (value < 0) {
-                  return ts.factory.createPrefixUnaryExpression(
-                    ts.SyntaxKind.MinusToken,
-                    ts.factory.createNumericLiteral(Math.abs(value)),
-                  );
-                } else {
-                  return ts.factory.createNumericLiteral(value);
-                }
-              } else {
-                return ts.factory.createStringLiteral(value);
-              }
-            }),
-          ),
-        ),
-      ],
-      ts.NodeFlags.Const,
-    ),
-  );
-}
-
-function sanitizeMemberName(name: string) {
-  let sanitizedName = name.replace(JS_ENUM_INVALID_CHARS_RE, (c) => {
-    const last = c[c.length - 1];
-    return JS_PROPERTY_INDEX_INVALID_CHARS_RE.test(last) ? "" : last.toUpperCase();
-  });
-  if (Number(name[0]) >= 0) {
-    sanitizedName = `Value${name}`;
-  }
-  return sanitizedName;
-}
-
-/** Sanitize TS enum member expression */
-export function tsEnumMember(value: string | number, metadata: { name?: string; description?: string | null } = {}) {
-  let name = metadata.name ?? String(value);
-  if (!JS_PROPERTY_INDEX_RE.test(name)) {
-    if (Number(name[0]) >= 0) {
-      name = `Value${name}`.replace(".", "_"); // don't forged decimals;
-    } else if (name[0] === "-") {
-      name = `ValueMinus${name.slice(1)}`;
-    }
-
-    const invalidCharMatch = name.match(JS_PROPERTY_INDEX_INVALID_CHARS_RE);
-    if (invalidCharMatch) {
-      if (invalidCharMatch[0] === name) {
-        name = `"${name}"`;
-      } else {
-        name = name.replace(JS_PROPERTY_INDEX_INVALID_CHARS_RE, (s) => {
-          return s in SPECIAL_CHARACTER_MAP ? SPECIAL_CHARACTER_MAP[s] : "_";
-        });
-      }
-    }
-  }
-
-  let member: ts.EnumMember;
-  if (typeof value === "number") {
-    const literal =
-      value < 0
-        ? ts.factory.createPrefixUnaryExpression(
-            ts.SyntaxKind.MinusToken,
-            ts.factory.createNumericLiteral(Math.abs(value)),
-          )
-        : ts.factory.createNumericLiteral(value);
-
-    member = ts.factory.createEnumMember(name, literal);
-  } else {
-    member = ts.factory.createEnumMember(name, ts.factory.createStringLiteral(value));
-  }
-
-  const trimmedDescription = metadata.description?.trim();
-  if (trimmedDescription === undefined || trimmedDescription === null || trimmedDescription === "") {
-    return member;
-  }
-
-  return ts.addSyntheticLeadingComment(member, ts.SyntaxKind.SingleLineCommentTrivia, ` ${trimmedDescription}`, true);
-}
-
 /** Create an intersection type */
-export function tsIntersection(types: ts.TypeNode[]): ts.TypeNode {
+export function tsIntersection(types: TypeNode[]): TypeNode {
   if (types.length === 0) {
     return NEVER;
   }
   if (types.length === 1) {
     return types[0];
   }
-  return ts.factory.createIntersectionTypeNode(tsDedupe(types));
+  return { kind: "intersection", types: tsDedupe(types) };
 }
 
 /** Is this a primitive type (string, number, boolean, null, undefined)? */
-export function tsIsPrimitive(type: ts.TypeNode): boolean {
+export function tsIsPrimitive(type: TypeNode | undefined): boolean {
   if (!type) {
     return true;
   }
-  return (
-    ts.SyntaxKind[type.kind] === "BooleanKeyword" ||
-    ts.SyntaxKind[type.kind] === "NeverKeyword" ||
-    ts.SyntaxKind[type.kind] === "NullKeyword" ||
-    ts.SyntaxKind[type.kind] === "NumberKeyword" ||
-    ts.SyntaxKind[type.kind] === "StringKeyword" ||
-    ts.SyntaxKind[type.kind] === "UndefinedKeyword" ||
-    ("literal" in type && tsIsPrimitive(type.literal as TypeLiteralNode))
-  );
+  return type.kind === "keyword" && type.name !== "unknown";
 }
 
 /** Create a literal type */
-export function tsLiteral(value: unknown): ts.TypeNode {
+export function tsLiteral(value: unknown): TypeNode {
   if (typeof value === "string") {
-    // workaround for UTF-8: https://github.com/microsoft/TypeScript/issues/36174
-    return ts.factory.createIdentifier(JSON.stringify(value)) as unknown as ts.TypeNode;
+    return { kind: "literal", text: JSON.stringify(value) };
   }
   if (typeof value === "number") {
-    const literal =
-      value < 0
-        ? ts.factory.createPrefixUnaryExpression(
-            ts.SyntaxKind.MinusToken,
-            ts.factory.createNumericLiteral(Math.abs(value)),
-          )
-        : ts.factory.createNumericLiteral(value);
-    return ts.factory.createLiteralTypeNode(literal);
+    return { kind: "literal", text: value < 0 ? `-${Math.abs(value)}` : String(value) };
   }
   if (typeof value === "boolean") {
     return value === true ? TRUE : FALSE;
@@ -500,117 +261,203 @@ export function tsLiteral(value: unknown): ts.TypeNode {
   }
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return ts.factory.createArrayTypeNode(NEVER);
+      return { kind: "array", element: NEVER };
     }
-    return ts.factory.createTupleTypeNode(value.map((v: unknown) => tsLiteral(v)));
+    return { kind: "tuple", elements: value.map((v: unknown) => tsLiteral(v)) };
   }
   if (typeof value === "object") {
-    const keys: ts.TypeElement[] = [];
+    const members: Member[] = [];
     for (const [k, v] of Object.entries(value)) {
-      keys.push(
-        ts.factory.createPropertySignature(
-          /* modifiers     */ undefined,
-          /* name          */ tsPropertyIndex(k),
-          /* questionToken */ undefined,
-          /* type          */ tsLiteral(v),
-        ),
-      );
+      members.push({ name: tsPropertyIndex(k), type: tsLiteral(v) });
     }
-    return keys.length ? ts.factory.createTypeLiteralNode(keys) : tsRecord(STRING, NEVER);
+    return members.length ? { kind: "object", members } : tsRecord(STRING, NEVER);
   }
   return UNKNOWN;
 }
 
-/** Modifiers (readonly) */
-export function tsModifiers(modifiers: { readonly?: boolean; export?: boolean }): ts.Modifier[] {
-  const typeMods: ts.Modifier[] = [];
-  if (modifiers.export) {
-    typeMods.push(ts.factory.createModifier(ts.SyntaxKind.ExportKeyword));
-  }
-  if (modifiers.readonly) {
-    typeMods.push(ts.factory.createModifier(ts.SyntaxKind.ReadonlyKeyword));
-  }
-  return typeMods;
-}
-
 /** Create a T | null union */
-export function tsNullable(types: ts.TypeNode[]): ts.TypeNode {
-  return ts.factory.createUnionTypeNode([...types, NULL]);
+export function tsNullable(types: TypeNode[]): TypeNode {
+  return { kind: "union", types: [...types, NULL] };
 }
 
 /** Create a TS Omit<X, Y> type */
-export function tsOmit(type: ts.TypeNode, keys: string[]): ts.TypeNode {
-  return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("Omit"), [
-    type,
-    ts.factory.createUnionTypeNode(keys.map((k) => tsLiteral(k))),
-  ]);
+export function tsOmit(type: TypeNode, keys: string[]): TypeNode {
+  return { kind: "ref", name: "Omit", args: [type, { kind: "union", types: keys.map((k) => tsLiteral(k)) }] };
 }
 
 /** Create a TS Record<X, Y> type */
-export function tsRecord(key: ts.TypeNode, value: ts.TypeNode) {
-  return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("Record"), [key, value]);
+export function tsRecord(key: TypeNode, value: TypeNode): TypeNode {
+  return { kind: "ref", name: "Record", args: [key, value] };
 }
 
 /** Create a valid property index */
-export function tsPropertyIndex(index: string | number) {
+export function tsPropertyIndex(index: string | number): string {
   if (
     (typeof index === "number" && !(index < 0)) ||
     (typeof index === "string" && String(Number(index)) === index && index[0] !== "-")
   ) {
-    return ts.factory.createNumericLiteral(index);
+    return String(index);
   }
-  return typeof index === "string" && JS_PROPERTY_INDEX_RE.test(index)
-    ? ts.factory.createIdentifier(index)
-    : ts.factory.createStringLiteral(String(index));
+  return typeof index === "string" && JS_PROPERTY_INDEX_RE.test(index) ? index : tsStringLiteral(String(index));
 }
 
 /** Create a union type */
-export function tsUnion(types: ts.TypeNode[]): ts.TypeNode {
+export function tsUnion(types: TypeNode[]): TypeNode {
   if (types.length === 0) {
     return NEVER;
   }
   if (types.length === 1) {
     return types[0];
   }
-  return ts.factory.createUnionTypeNode(tsDedupe(types));
+  return { kind: "union", types: tsDedupe(types) };
 }
+
+const WITH_REQUIRED_HELPER = `type WithRequired<T, K extends keyof T> = T & {
+    [P in K]-?: T[P];
+};`;
 
 /** Create a WithRequired<X, Y> type */
 export function tsWithRequired(
-  type: ts.TypeNode,
+  type: TypeNode,
   keys: string[],
-  injectFooter: ts.Node[], // needed to inject type helper if used
-): ts.TypeNode {
+  injectFooter: Node[], // needed to inject type helper if used
+): TypeNode {
   if (keys.length === 0) {
     return type;
   }
 
   // inject helper, if needed
-  if (!injectFooter.some((node) => ts.isTypeAliasDeclaration(node) && node?.name?.escapedText === "WithRequired")) {
-    const helper = stringToAST("type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };")[0] as any;
-    injectFooter.push(helper);
+  if (!injectFooter.some((node) => node.kind === "raw" && node.name === "WithRequired")) {
+    injectFooter.push({ kind: "raw", name: "WithRequired", text: WITH_REQUIRED_HELPER });
   }
 
-  return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("WithRequired"), [
-    type,
-    tsUnion(keys.map((k) => tsLiteral(k))),
-  ]);
+  return { kind: "ref", name: "WithRequired", args: [type, tsUnion(keys.map((k) => tsLiteral(k)))] };
 }
 
-/**
- * Enhanced ReadonlyArray.
- * eg: type Foo = ReadonlyArray<T>; type Bar = ReadonlyArray<T[]>
- * Foo and Bar are both of type `readonly T[]`
- */
-export function tsReadonlyArray(type: ts.TypeNode, injectFooter?: ts.Node[]): ts.TypeNode {
-  if (
-    injectFooter &&
-    !injectFooter.some((node) => ts.isTypeAliasDeclaration(node) && node?.name?.escapedText === "ReadonlyArray")
-  ) {
-    const helper = stringToAST(
-      "type ReadonlyArray<T> = [Exclude<T, undefined>] extends [unknown[]] ? Readonly<Exclude<T, undefined>> : Readonly<Exclude<T, undefined>[]>;",
-    )[0] as any;
-    injectFooter.push(helper);
+// Printer
+
+const INDENT = "    ";
+
+/** Convert AST nodes to TypeScript source */
+export function astToString(ast: Node | Member | (Node | Member)[]): string {
+  const nodes = Array.isArray(ast) ? ast : [ast];
+  return nodes.map((node) => `${printNode(node)}\n`).join("");
+}
+
+function printNode(node: Node | Member): string {
+  if (!("kind" in node)) {
+    return printMember(node, 0);
   }
-  return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("ReadonlyArray"), [type]);
+  switch (node.kind) {
+    case "interface":
+      return `export interface ${node.name} ${printType({ kind: "object", members: node.members }, 0)}`;
+    case "alias":
+      return `export type ${node.name} = ${printType(node.type, 0)};`;
+    case "raw":
+      return node.text;
+    default:
+      return printType(node, 0);
+  }
+}
+
+function printType(type: TypeNode, level: number): string {
+  switch (type.kind) {
+    case "keyword":
+      return type.name;
+    case "literal":
+      return type.text;
+    case "ref":
+      return type.args ? `${type.name}<${type.args.map((t) => printType(t, level)).join(", ")}>` : type.name;
+    case "indexed":
+      return `${printType(type.object, level)}[${tsStringLiteral(type.index)}]`;
+    case "array": {
+      const element = printType(type.element, level);
+      return type.element.kind === "union" || type.element.kind === "intersection" ? `(${element})[]` : `${element}[]`;
+    }
+    case "tuple": {
+      const pad = INDENT.repeat(level);
+      const elements = type.elements.map((t) => `${pad}${INDENT}${printType(t, level + 1)}`);
+      return elements.length ? `[\n${elements.join(",\n")}\n${pad}]` : `[\n${pad}]`;
+    }
+    case "union":
+    case "intersection":
+      return type.types
+        .map((t) => {
+          const printed = printType(t, level);
+          return t.kind === "union" || t.kind === "intersection" ? `(${printed})` : printed;
+        })
+        .join(type.kind === "union" ? " | " : " & ");
+    case "object":
+      if (!type.members.length) {
+        return "{}";
+      }
+      return `{\n${type.members.map((m) => printMember(m, level + 1)).join("\n")}\n${INDENT.repeat(level)}}`;
+  }
+}
+
+function printMember(member: Member, level: number): string {
+  const pad = INDENT.repeat(level);
+  const comment = member.comment ? `${printComment(member.comment, level)}\n` : "";
+  const name = member.indexSignature ? `[${member.indexSignature}: string]` : member.name;
+  return `${comment}${pad}${member.readonly ? "readonly " : ""}${name}${member.optional ? "?" : ""}: ${printType(member.type, level)};`;
+}
+
+const WHITESPACE_RE = /[^\S\r\n\u2028\u2029]/;
+
+/** Print a multi-line comment, re-indenting continuation lines the way the TypeScript printer does */
+function printComment(text: string, level: number): string {
+  const lines = `/*${text}*/`.split(/\r\n|[\n\r\u2028\u2029]/);
+  return lines
+    .map((line) => {
+      let indent = level * INDENT.length;
+      for (const ch of line) {
+        if (ch === "\t") {
+          indent += INDENT.length - (indent % INDENT.length);
+        } else if (WHITESPACE_RE.test(ch)) {
+          indent++;
+        } else {
+          break;
+        }
+      }
+      return `${" ".repeat(indent)}${line.trim()}`;
+    })
+    .join("\n");
+}
+
+// String escaping (matches the TypeScript printer’s escapeNonAsciiString())
+
+const ESCAPED_CHARS: Record<string, string> = {
+  "\t": "\\t",
+  "\v": "\\v",
+  "\f": "\\f",
+  "\b": "\\b",
+  "\r": "\\r",
+  "\n": "\\n",
+  "\\": "\\\\",
+  '"': '\\"',
+  "\u2028": "\\u2028",
+  "\u2029": "\\u2029",
+  "\u0085": "\\u0085",
+};
+// biome-ignore lint/suspicious/noControlCharactersInRegex: control characters must be escaped
+const ESCAPE_RE = /[\\"\u0000-\u001f\u2028\u2029\u0085]/g;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: matches everything outside ASCII
+const NON_ASCII_RE = /[^\u0000-\u007F]/g;
+
+function utf16Escape(charCode: number): string {
+  return `\\u${charCode.toString(16).toUpperCase().padStart(4, "0")}`;
+}
+
+/** Create a double-quoted string literal */
+export function tsStringLiteral(value: string): string {
+  const escaped = value
+    .replace(ESCAPE_RE, (c, offset: number, str: string) => {
+      if (c === "\0") {
+        const next = str.charCodeAt(offset + 1);
+        return next >= 0x30 && next <= 0x39 ? "\\x00" : "\\0";
+      }
+      return ESCAPED_CHARS[c] ?? utf16Escape(c.charCodeAt(0));
+    })
+    .replace(NON_ASCII_RE, (c) => utf16Escape(c.charCodeAt(0)));
+  return `"${escaped}"`;
 }

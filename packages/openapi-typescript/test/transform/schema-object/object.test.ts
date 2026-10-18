@@ -389,46 +389,6 @@ describe("transformSchemaObject > object", () => {
       },
     ],
     [
-      "options > immutable (string)",
-      {
-        given: {
-          type: "string",
-        },
-        want: "string",
-        options: {
-          ...DEFAULT_OPTIONS,
-          ctx: { ...DEFAULT_OPTIONS.ctx, immutable: true },
-        },
-      },
-    ],
-    [
-      "options > immutable (array)",
-      {
-        given: {
-          type: "object",
-          properties: {
-            array: {
-              type: "array",
-              nullable: true,
-              items: {
-                type: "object",
-                additionalProperties: true,
-              },
-            },
-          },
-        },
-        want: `{
-    readonly array?: readonly {
-        readonly [key: string]: unknown;
-    }[] | null;
-}`,
-        options: {
-          ...DEFAULT_OPTIONS,
-          ctx: { ...DEFAULT_OPTIONS.ctx, immutable: true },
-        },
-      },
-    ],
-    [
       "options > excludeDeprecated: true",
       {
         given: {
@@ -518,70 +478,7 @@ describe("transformSchemaObject > object", () => {
       },
     ],
     [
-      "options > readWriteMarkers: true (readOnly)",
-      {
-        given: {
-          type: "object",
-          properties: {
-            id: { type: "number", readOnly: true },
-            name: { type: "string" },
-          },
-        },
-        want: `{
-    id?: $Read<number>;
-    name?: string;
-}`,
-        options: {
-          ...DEFAULT_OPTIONS,
-          ctx: { ...DEFAULT_OPTIONS.ctx, readWriteMarkers: true },
-        },
-      },
-    ],
-    [
-      "options > readWriteMarkers: true (writeOnly)",
-      {
-        given: {
-          type: "object",
-          properties: {
-            name: { type: "string" },
-            password: { type: "string", writeOnly: true },
-          },
-        },
-        want: `{
-    name?: string;
-    password?: $Write<string>;
-}`,
-        options: {
-          ...DEFAULT_OPTIONS,
-          ctx: { ...DEFAULT_OPTIONS.ctx, readWriteMarkers: true },
-        },
-      },
-    ],
-    [
-      "options > readWriteMarkers: true (both)",
-      {
-        given: {
-          type: "object",
-          properties: {
-            id: { type: "number", readOnly: true },
-            name: { type: "string" },
-            password: { type: "string", writeOnly: true },
-          },
-          required: ["name"],
-        },
-        want: `{
-    id?: $Read<number>;
-    name: string;
-    password?: $Write<string>;
-}`,
-        options: {
-          ...DEFAULT_OPTIONS,
-          ctx: { ...DEFAULT_OPTIONS.ctx, readWriteMarkers: true },
-        },
-      },
-    ],
-    [
-      "options > readWriteMarkers: false (default, no markers)",
+      "readOnly and writeOnly",
       {
         given: {
           type: "object",
@@ -594,34 +491,6 @@ describe("transformSchemaObject > object", () => {
     readonly id?: number;
     password?: string;
 }`,
-      },
-    ],
-    [
-      "options > readWriteMarkers: true ($defs)",
-      {
-        given: {
-          type: "object",
-          properties: {
-            foo: { type: "string" },
-          },
-          $defs: {
-            readOnlyDef: { type: "string", readOnly: true },
-            writeOnlyDef: { type: "number", writeOnly: true },
-            normalDef: { type: "boolean" },
-          },
-        },
-        want: `{
-    foo?: string;
-    $defs: {
-        readOnlyDef: $Read<string>;
-        writeOnlyDef: $Write<number>;
-        normalDef: boolean;
-    };
-}`,
-        options: {
-          ...DEFAULT_OPTIONS,
-          ctx: { ...DEFAULT_OPTIONS.ctx, readWriteMarkers: true },
-        },
       },
     ],
   ];

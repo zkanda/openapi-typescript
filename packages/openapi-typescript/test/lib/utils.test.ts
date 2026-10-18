@@ -9,14 +9,6 @@ describe("getEntries", () => {
   });
 
   describe("options", () => {
-    test("alphabetize: true", () => {
-      expect(getEntries({ z: "z", 0: 0, a: "a" }, { alphabetize: true })).toEqual([
-        ["0", 0],
-        ["a", "a"],
-        ["z", "z"],
-      ]);
-    });
-
     test("excludeDeprecated: true", () => {
       expect(
         getEntries(

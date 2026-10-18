@@ -1,5 +1,4 @@
-import ts from "typescript";
-import { addJSDocComment, NEVER, oapiRef, tsModifiers, tsPropertyIndex } from "../lib/ts.js";
+import { addJSDocComment, type Member, NEVER, oapiRef, type TypeNode, tsPropertyIndex } from "../lib/ts.js";
 import { createRef, getEntries } from "../lib/utils.js";
 import type { ResponsesObject, TransformNodeOptions } from "../types.js";
 import transformResponseObject from "./response-object.js";
@@ -11,8 +10,8 @@ import transformResponseObject from "./response-object.js";
 export default function transformResponsesObject(
   responsesObject: ResponsesObject,
   options: TransformNodeOptions,
-): ts.TypeNode {
-  const type: ts.TypeElement[] = [];
+): TypeNode {
+  const members: Member[] = [];
 
   for (const [responseCode, responseObject] of getEntries(responsesObject, options.ctx)) {
     const responseType =
@@ -22,15 +21,10 @@ export default function transformResponsesObject(
             ...options,
             path: createRef([options.path, "responses", responseCode]),
           });
-    const property = ts.factory.createPropertySignature(
-      /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-      /* name          */ tsPropertyIndex(responseCode),
-      /* questionToken */ undefined,
-      /* type          */ responseType,
-    );
-    addJSDocComment(responseObject, property);
-    type.push(property);
+    const member: Member = { name: tsPropertyIndex(responseCode), type: responseType };
+    addJSDocComment(responseObject, member);
+    members.push(member);
   }
 
-  return type.length ? ts.factory.createTypeLiteralNode(type) : NEVER;
+  return members.length ? { kind: "object", members } : NEVER;
 }

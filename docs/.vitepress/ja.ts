@@ -39,15 +39,6 @@ export default defineConfig({
             { text: "API", link: "/ja/openapi-fetch/api" },
           ],
         },
-        {
-          text: "openapi-react-query",
-          items: [
-            { text: "始める", link: "/ja/openapi-react-query/" },
-            { text: "useQuery", link: "/ja/openapi-react-query/use-query" },
-            { text: "useMutation", link: "/ja/openapi-react-query/use-mutation" },
-            { text: "useSuspenseQuery", link: "/ja/openapi-react-query/use-suspense-query" },
-          ],
-        },
       ],
     },
 

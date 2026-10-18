@@ -1,14 +1,4 @@
-import ts from "typescript";
-import {
-  addJSDocComment,
-  NEVER,
-  oapiRef,
-  QUESTION_TOKEN,
-  STRING,
-  tsModifiers,
-  tsPropertyIndex,
-  UNKNOWN,
-} from "../lib/ts.js";
+import { addJSDocComment, type Member, NEVER, oapiRef, type TypeNode, tsPropertyIndex, UNKNOWN } from "../lib/ts.js";
 import { createRef, getEntries } from "../lib/utils.js";
 import type { ResponseObject, TransformNodeOptions } from "../types.js";
 import transformHeaderObject from "./header-object.js";
@@ -21,14 +11,13 @@ import transformMediaTypeObject from "./media-type-object.js";
 export default function transformResponseObject(
   responseObject: ResponseObject,
   options: TransformNodeOptions,
-): ts.TypeNode {
-  const type: ts.TypeElement[] = [];
+): TypeNode {
+  const members: Member[] = [];
 
   // headers
-  const headersObject: ts.TypeElement[] = [];
+  const headers: Member[] = [];
   if (responseObject.headers) {
     for (const [name, headerObject] of getEntries(responseObject.headers, options.ctx)) {
-      const optional = "$ref" in headerObject || headerObject.required ? undefined : QUESTION_TOKEN;
       const subType =
         "$ref" in headerObject
           ? oapiRef(headerObject.$ref)
@@ -36,77 +25,39 @@ export default function transformResponseObject(
               ...options,
               path: createRef([options.path, "headers", name]),
             });
-      const property = ts.factory.createPropertySignature(
-        /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-        /* name          */ tsPropertyIndex(name),
-        /* questionToken */ optional,
-        /* type          */ subType,
-      );
-      addJSDocComment(headerObject, property);
-      headersObject.push(property);
+      const member: Member = {
+        name: tsPropertyIndex(name),
+        optional: !("$ref" in headerObject || headerObject.required),
+        type: subType,
+      };
+      addJSDocComment(headerObject, member);
+      headers.push(member);
     }
   }
   // allow additional unknown headers
-  headersObject.push(
-    ts.factory.createIndexSignature(
-      /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-      /* parameters */ [
-        ts.factory.createParameterDeclaration(
-          /* modifiers      */ undefined,
-          /* dotDotDotToken */ undefined,
-          /* name           */ ts.factory.createIdentifier("name"),
-          /* questionToken  */ undefined,
-          /* type           */ STRING,
-        ),
-      ],
-      /* type          */ UNKNOWN,
-    ),
-  );
-  type.push(
-    ts.factory.createPropertySignature(
-      /* modifiers     */ undefined,
-      /* name          */ tsPropertyIndex("headers"),
-      /* questionToken */ undefined,
-      /* type          */ ts.factory.createTypeLiteralNode(headersObject),
-    ),
-  );
+  headers.push({ name: "", indexSignature: "name", type: UNKNOWN });
+  members.push({ name: "headers", type: { kind: "object", members: headers } });
 
   // content
-  const contentObject: ts.TypeElement[] = [];
+  const content: Member[] = [];
   if (responseObject.content) {
     for (const [contentType, mediaTypeObject] of getEntries(responseObject.content ?? {}, options.ctx)) {
-      const property = ts.factory.createPropertySignature(
-        /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-        /* name          */ tsPropertyIndex(contentType),
-        /* questionToken */ undefined,
-        /* type          */ transformMediaTypeObject(mediaTypeObject, {
+      const member: Member = {
+        name: tsPropertyIndex(contentType),
+        type: transformMediaTypeObject(mediaTypeObject, {
           ...options,
           path: createRef([options.path, "content", contentType]),
         }),
-      );
-      addJSDocComment(mediaTypeObject, property);
-      contentObject.push(property);
+      };
+      addJSDocComment(mediaTypeObject, member);
+      content.push(member);
     }
   }
-  if (contentObject.length) {
-    type.push(
-      ts.factory.createPropertySignature(
-        /* modifiers     */ undefined,
-        /* name          */ tsPropertyIndex("content"),
-        /* questionToken */ undefined,
-        /* type          */ ts.factory.createTypeLiteralNode(contentObject),
-      ),
-    );
+  if (content.length) {
+    members.push({ name: "content", type: { kind: "object", members: content } });
   } else {
-    type.push(
-      ts.factory.createPropertySignature(
-        /* modifiers     */ undefined,
-        /* name          */ tsPropertyIndex("content"),
-        /* questionToken */ QUESTION_TOKEN,
-        /* type          */ NEVER,
-      ),
-    );
+    members.push({ name: "content", optional: true, type: NEVER });
   }
 
-  return ts.factory.createTypeLiteralNode(type);
+  return { kind: "object", members };
 }

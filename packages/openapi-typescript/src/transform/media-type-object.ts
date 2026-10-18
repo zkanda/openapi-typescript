@@ -1,5 +1,4 @@
-import type ts from "typescript";
-import { UNKNOWN } from "../lib/ts.js";
+import { type TypeNode, UNKNOWN } from "../lib/ts.js";
 import type { MediaTypeObject, TransformNodeOptions } from "../types.js";
 import transformSchemaObject from "./schema-object.js";
 
@@ -10,7 +9,7 @@ import transformSchemaObject from "./schema-object.js";
 export default function transformMediaTypeObject(
   mediaTypeObject: MediaTypeObject,
   options: TransformNodeOptions,
-): ts.TypeNode {
+): TypeNode {
   if (!mediaTypeObject.schema) {
     return UNKNOWN;
   }

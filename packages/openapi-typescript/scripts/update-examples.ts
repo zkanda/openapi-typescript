@@ -24,21 +24,12 @@ async function generateSchemas() {
 
       // addiitonal flag tests (only for GitHub API, arbitrarily-chosen so we don’t have too much noise)
       if (name === "github-api") {
-        args.push([`./examples/${name}${ext}`, "--immutable", "-o", `./examples/${name}-immutable.ts`]);
-        args.push([
-          `./examples/${name}${ext}`,
-          "--immutable",
-          "--export-type",
-          "-o",
-          `./examples/${name}-export-type-immutable.ts`,
-        ]);
         args.push([
           `./examples/${name}${ext}`,
           "--properties-required-by-default",
           "-o",
           `./examples/${name}-required.ts`,
         ]);
-        args.push([`./examples/${name}${ext}`, "--root-types", "-o", `./examples/${name}-root-types.ts`]);
       }
 
       await Promise.all(args.map((a) => execa("./bin/cli.js", a, { cwd })));
