@@ -6,7 +6,7 @@ Thanks for being willing to contribute! 🙏
 
 ## Open issues
 
-Please check out the [the open issues](https://github.com/openapi-ts/openapi-typescript/issues). Issues labelled [**Good First Issue**](https://github.com/openapi-ts/openapi-typescript/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are especially good to start with.
+Please check out the [the open issues](https://github.com/zkanda/openapi-typescript/issues). Issues labelled [**Good First Issue**](https://github.com/zkanda/openapi-typescript/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are especially good to start with.
 
 Contributing doesn’t have to be in code. Simply answering questions in open issues or providing workarounds is as important as making pull requests.
 

@@ -12,7 +12,7 @@ Advanced usage and various topics. Interpret this as loose recommendations for _
 To enable debugging, set `DEBUG=openapi-ts:*` as an env var like so:
 
 ```sh
-$ DEBUG=openapi-ts:* npx openapi-typescript schema.yaml -o my-types.ts
+$ DEBUG=openapi-ts:* npx @zkanda/openapi-typescript schema.yaml -o my-types.ts
 ```
 
 To only see certain types of debug messages, you can set `DEBUG=openapi-ts:[scope]` instead. Valid scopes are `bundle` and `ts`.

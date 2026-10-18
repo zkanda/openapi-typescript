@@ -11,7 +11,7 @@ import type {
   ResponseObjectMap,
   SuccessResponse,
   Writable,
-} from "openapi-typescript-helpers";
+} from "@zkanda/openapi-typescript-helpers";
 
 /** Options for each client instance */
 export interface ClientOptions extends Omit<RequestInit, "headers"> {

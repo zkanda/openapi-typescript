@@ -10,7 +10,7 @@ The Node API may be useful if dealing with dynamically-created schemas, or youâ€
 ## Setup
 
 ```bash
-npm i --save-dev openapi-typescript
+npm i --save-dev @zkanda/openapi-typescript
 ```
 
 ::: tip Recommended
@@ -37,7 +37,7 @@ The Node API returns a `Promise` with the generated TypeScript as a `string`. Pr
 
 ```ts [src/my-project.ts]
 import fs from "node:fs";
-import openapiTS, { COMMENT_HEADER } from "openapi-typescript";
+import openapiTS, { COMMENT_HEADER } from "@zkanda/openapi-typescript";
 
 const output = await openapiTS(new URL("./my-schema.yaml", import.meta.url));
 

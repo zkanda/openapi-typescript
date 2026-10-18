@@ -1,4 +1,10 @@
-# openapi-typescript-helpers
+# @zkanda/openapi-typescript-helpers
+
+## 0.2.0
+
+### Minor Changes
+
+- Publish under the `@zkanda` scope: `openapi-typescript` → `@zkanda/openapi-typescript`, `openapi-fetch` → `@zkanda/openapi-fetch`, `openapi-typescript-helpers` → `@zkanda/openapi-typescript-helpers`. Update installs and imports. The CLI command is still `openapi-typescript`.
 
 ## 0.1.0
 

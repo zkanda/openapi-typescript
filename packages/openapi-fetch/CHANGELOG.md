@@ -1,10 +1,16 @@
-# openapi-fetch
+# @zkanda/openapi-fetch
 
-## Unreleased
+## 0.18.0
+
+### Minor Changes
+
+- Publish under the `@zkanda` scope: `openapi-typescript` → `@zkanda/openapi-typescript`, `openapi-fetch` → `@zkanda/openapi-fetch`, `openapi-typescript-helpers` → `@zkanda/openapi-typescript-helpers`. Update installs and imports. The CLI command is still `openapi-typescript`.
 
 ### Patch Changes
 
-- Handle empty error responses when the `Content-Length` header is stripped.
+- b775891: fix(openapi-fetch): handle empty error responses when Content-Length header is stripped
+- Updated dependencies
+  - @zkanda/openapi-typescript-helpers@0.2.0
 
 ## 0.17.0
 

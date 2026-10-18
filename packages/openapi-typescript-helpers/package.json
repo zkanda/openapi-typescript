@@ -1,7 +1,7 @@
 {
-  "name": "openapi-typescript-helpers",
+  "name": "@zkanda/openapi-typescript-helpers",
   "description": "TypeScript helpers for consuming openapi-typescript types",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Drew Powers",
     "email": "drew@pow.rs"
@@ -17,14 +17,14 @@
     },
     "./*": "./*"
   },
-  "homepage": "https://openapi-ts.dev",
+  "homepage": "https://github.com/zkanda/openapi-typescript/tree/main/packages/openapi-typescript-helpers#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openapi-ts/openapi-typescript",
+    "url": "https://github.com/zkanda/openapi-typescript",
     "directory": "packages/openapi-fetch"
   },
   "bugs": {
-    "url": "https://github.com/openapi-ts/openapi-typescript/issues"
+    "url": "https://github.com/zkanda/openapi-typescript/issues"
   },
   "scripts": {
     "build": "vp pack",
@@ -32,7 +32,7 @@
     "lint": "vp check"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
+    "typescript": "catalog:",
     "vite-plus": "catalog:"
   }
 }

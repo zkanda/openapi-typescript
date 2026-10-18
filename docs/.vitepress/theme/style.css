@@ -193,8 +193,7 @@ code {
   text-align: center;
 }
 
-.home-logo-salad h3,
-.home-sponsor h3 {
+.home-logo-salad h3 {
   color: var(--vp-c-text-3);
   font-size: 0.875rem;
   font-weight: 600;
@@ -222,16 +221,3 @@ code {
   width: auto;
 }
 
-.home-sponsor,
-.home-sponsor p {
-  color: var(--vp-c-text-2);
-  text-align: center;
-}
-
-.home-sponsor-list {
-  margin-block: 4rem;
-}
-
-.home-sponsor .donate {
-  display: inline-block;
-}

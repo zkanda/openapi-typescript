@@ -13,7 +13,7 @@ The Node.js API now returns the generated types as a `string` rather than a Type
 
 ```ts
 import fs from "node:fs";
-import openapiTS, { COMMENT_HEADER } from "openapi-typescript";
+import openapiTS, { COMMENT_HEADER } from "@zkanda/openapi-typescript";
 
 const output = await openapiTS(new URL("./my-schema.yaml", import.meta.url));
 fs.writeFileSync("./my-schema.d.ts", COMMENT_HEADER + output);
@@ -70,4 +70,4 @@ The biggest change is the handling of `string`s—in 6.x a string could refer to
 
 ---
 
-[See the full CHANGELOG](https://github.com/openapi-ts/openapi-typescript/blob/main/packages/openapi-typescript/CHANGELOG.md)
+[See the full CHANGELOG](https://github.com/zkanda/openapi-typescript/blob/main/packages/openapi-typescript/CHANGELOG.md)

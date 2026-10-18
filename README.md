@@ -12,6 +12,10 @@ Generate TypeScript types from static OpenAPI schemas
 Ultra-fast fetching for TypeScript generated automatically from your OpenAPI schema.
 </a>
 
+<a href="./packages/openapi-typescript-helpers"><strong>openapi-typescript-helpers</strong><br />
+TypeScript helpers for consuming openapi-typescript types
+</a>
+
 ## 🤝 Contributing
 
 Contributions are appreciated and welcome! See the appropriate guide for each package:
