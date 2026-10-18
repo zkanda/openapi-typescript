@@ -1,5 +1,11 @@
 # openapi-fetch
 
+## Unreleased
+
+### Patch Changes
+
+- Handle empty error responses when the `Content-Length` header is stripped.
+
 ## 0.17.0
 
 ### Minor Changes

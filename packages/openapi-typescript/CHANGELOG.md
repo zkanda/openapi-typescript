@@ -1,5 +1,19 @@
 # openapi-typescript
 
+## Unreleased
+
+### Major Changes
+
+- Remove the dependency on the `typescript` package so type generation works with TypeScript 7. The `typescript` peer dependency is gone.
+- `openapiTS()` now returns the generated TypeScript as a string.
+- Replace `@redocly/openapi-core` with a built-in loader and bundler. Redocly config (`--redocly`, `redocly.yaml` apis) and lint rules other than unresolved `$ref`s and duplicate `operationId`s are removed.
+- Remove options: `enum`, `enumValues`, `conditionalEnums`, `dedupeEnums`, `exportType`, `immutable`, `arrayLength`, `pathParamsAsTypes`, `alphabetize`, `rootTypes`, `rootTypesNoSchemaPrefix`, `rootTypesKeepCasing`, `makePathsEnum`, `generatePathParams`, `readWriteMarkers`, `inject`, `transform`, `postTransform`, `transformProperty`.
+- Output for the remaining options is unchanged.
+
+### Patch Changes
+
+- Support `additionalProperties: true` on string enums by generating a loose autocomplete union (`(enum literals) | (string & {})`), preserving editor suggestions while still accepting arbitrary string values.
+
 ## 7.13.0
 
 ### Minor Changes
