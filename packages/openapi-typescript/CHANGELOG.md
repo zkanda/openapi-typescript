@@ -10,6 +10,8 @@
   - Remove options: `enum`, `enumValues`, `conditionalEnums`, `dedupeEnums`, `exportType`, `immutable`, `arrayLength`, `pathParamsAsTypes`, `alphabetize`, `rootTypes`, `rootTypesNoSchemaPrefix`, `rootTypesKeepCasing`, `makePathsEnum`, `generatePathParams`, `readWriteMarkers`, `inject`, `transform`, `postTransform`, `transformProperty`.
   - Output for the remaining options is unchanged.
 
+- Require Node.js 22 or later (from updated `js-yaml` 5, `supports-color` 11, and `yargs-parser` 22).
+
 - Publish under the `@zkanda` scope: `openapi-typescript` → `@zkanda/openapi-typescript`, `openapi-fetch` → `@zkanda/openapi-fetch`, `openapi-typescript-helpers` → `@zkanda/openapi-typescript-helpers`. Update installs and imports. The CLI command is still `openapi-typescript`.
 
 ### Patch Changes
