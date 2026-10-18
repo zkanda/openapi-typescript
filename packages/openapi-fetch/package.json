@@ -40,22 +40,19 @@
     "svelte"
   ],
   "scripts": {
-    "build": "unbuild",
-    "format": "biome format . --write",
-    "lint": "pnpm run lint:js && pnpm run lint:ts && pnpm run lint:ts-no-strict",
-    "lint:js": "biome check .",
-    "lint:ts": "tsc --noEmit",
-    "lint:ts-no-strict": "tsc --noEmit -p test/no-strict-null-checks/tsconfig.json",
+    "build": "vp pack",
+    "format": "vp fmt",
+    "lint": "vp check",
     "generate-types": "node test/generate-types.js",
     "prepack": "pnpm run build",
     "pretest": "pnpm run generate-types",
     "test": "pnpm run test:js && pnpm run test:exports",
-    "test:js": "vitest run",
+    "test:js": "vp test run",
     "test:exports": "pnpm run build && attw --pack .",
     "test-e2e": "playwright test",
-    "bench:js": "vitest bench",
-    "e2e-vite-build": "vite build test/e2e/app",
-    "e2e-vite-start": "vite preview test/e2e/app",
+    "bench:js": "vp test bench",
+    "e2e-vite-build": "vp build test/e2e/app",
+    "e2e-vite-start": "vp preview test/e2e/app",
     "version": "pnpm run prepare && pnpm run build"
   },
   "dependencies": {
@@ -73,6 +70,7 @@
     "superagent": "10.3.0",
     "typescript": "catalog:",
     "undici": "7.25.0",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

@@ -1,4 +1,4 @@
-import { assertType, expect, expectTypeOf, test } from "vitest";
+import { assertType, expect, expectTypeOf, test } from "vite-plus/test";
 import type { Middleware, MiddlewareCallbackParams } from "../../src/index.js";
 import { createObservedClient } from "../helpers.js";
 import type { paths } from "./schemas/middleware.js";

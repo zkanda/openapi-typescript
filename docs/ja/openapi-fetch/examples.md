@@ -6,13 +6,9 @@ title: openapi-fetch 使用例
 
 openapi-fetchを他のフレームワークやライブラリと組み合わせて使用するコード例
 
-## React + React Query
-
-See [openapi-react-query](/ja/openapi-react-query/)
-
 ## Next.js
 
-[Next.js](https://nextjs.org/) は、React向けの最も人気のあるSSR（サーバーサイドレンダリング）フレームワークです。[React Query](#react--react-query) はクライアントサイドでのデータ取得に推奨されていますが、この例では、Next.jsの[サーバーサイドでのデータ取得機能](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#fetching-data-on-the-server-with-fetch)を利用し、ビルトインのキャッシュ機能を活用する方法を示しています。
+[Next.js](https://nextjs.org/) は、React向けの最も人気のあるSSR（サーバーサイドレンダリング）フレームワークです。React Query はクライアントサイドでのデータ取得に推奨されていますが、この例では、Next.jsの[サーバーサイドでのデータ取得機能](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#fetching-data-on-the-server-with-fetch)を利用し、ビルトインのキャッシュ機能を活用する方法を示しています。
 
 [GitHubでコード例を見る](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-fetch/examples/nextjs)
 

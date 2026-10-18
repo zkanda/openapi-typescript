@@ -45,12 +45,6 @@ description: このプロジェクトに関する追加情報
 2. ネイティブの Fetch API を尊重しつつ、（`await res.json()` などの）ボイラープレートを削減すること。
 3. 可能な限り軽量で高性能であること。
 
-### openapi-react-query
-
-1. 型は厳格であり、必要最小限のジェネリクスでOpenAPIスキーマから自動的に推論されるべきです。
-2. 元の `@tanstack/react-query` API を尊重しつつ、ボイラープレートを減らします。
-3. できるだけ軽量でパフォーマンスが高くなるようにします。
-
 ## メインテナー
 
 This library is currently maintained by these amazing individuals:

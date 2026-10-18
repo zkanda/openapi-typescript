@@ -328,15 +328,13 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
           }
         }
         const optional = !(
-          (
-            schemaObject.required?.includes(k) ||
-            (schemaObject.required === undefined && options.ctx.propertiesRequiredByDefault) ||
-            (hasDefault &&
-              options.ctx.defaultNonNullable &&
-              !options.path?.includes("parameters") &&
-              !options.path?.includes("requestBody") &&
-              !options.path?.includes("requestBodies"))
-          ) // can’t be required, even with defaults
+          schemaObject.required?.includes(k) ||
+          (schemaObject.required === undefined && options.ctx.propertiesRequiredByDefault) ||
+          (hasDefault &&
+            options.ctx.defaultNonNullable &&
+            !options.path?.includes("parameters") &&
+            !options.path?.includes("requestBody") &&
+            !options.path?.includes("requestBodies")) // can’t be required, even with defaults
         );
         const member: Member = {
           name: tsPropertyIndex(k),

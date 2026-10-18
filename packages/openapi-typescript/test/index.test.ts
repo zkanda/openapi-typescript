@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, test, vi } from "vitest";
+import { beforeAll, describe, expect, test, vi } from "vite-plus/test";
 import openapiTS from "../src/index.js";
 import type { OpenAPI3, OpenAPITSOptions } from "../src/types.js";
 import type { TestCase } from "./test-helpers.js";

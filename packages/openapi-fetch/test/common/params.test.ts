@@ -1,4 +1,4 @@
-import { assertType, describe, expect, test } from "vitest";
+import { assertType, describe, expect, test } from "vite-plus/test";
 import type { QuerySerializerOptions } from "../../src/index.js";
 import { createObservedClient } from "../helpers.js";
 import type { components, paths } from "./schemas/common.js";

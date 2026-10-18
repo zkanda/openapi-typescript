@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { createObservedClient } from "../helpers.js";
 import type { components, paths } from "./schemas/get.js";
 

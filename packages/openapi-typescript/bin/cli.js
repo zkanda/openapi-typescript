@@ -54,20 +54,20 @@ function errorAndExit(message) {
 
 async function main() {
   if ("help" in flags) {
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.info(HELP);
     process.exit(0);
   }
   const packageJSON = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   if ("version" in flags) {
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.info(`v${packageJSON.version}`);
     process.exit(0);
   }
 
   const toStdout = !flags.output;
   if (!toStdout) {
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.info(`✨ ${c.bold(`openapi-typescript ${packageJSON.version}`)}`);
   }
 
@@ -96,7 +96,7 @@ async function main() {
   }
   fs.mkdirSync(new URL(".", outFile), { recursive: true });
   fs.writeFileSync(outFile, result, "utf8");
-  // biome-ignore lint/suspicious/noConsole: this is a CLI
+  // oxlint-disable-next-line no-console -- this is a CLI
   console.log(
     `🚀 ${c.green(`${input ?? "stdin"} → ${c.bold(flags.output)}`)} ${c.dim(`[${formatTime(performance.now() - timeStart)}]`)}`,
   );

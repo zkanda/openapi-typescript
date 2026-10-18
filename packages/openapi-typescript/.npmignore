@@ -1,8 +1,5 @@
-.turbo
 *.config.*
 examples/
 scripts/
 test/
-vitest.config.ts
 tsconfig*.json
-biome.json

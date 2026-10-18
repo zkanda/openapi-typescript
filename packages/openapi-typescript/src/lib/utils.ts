@@ -90,14 +90,14 @@ export function debug(msg: string, group?: string, time?: number) {
     if (typeof time === "number") {
       timeFormatted = c.green(` ${formatTime(time)} `);
     }
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.debug(`  ${c.bold(groupName)}${timeFormatted}${msg}`);
   }
 }
 
 /** Print error message */
 export function error(msg: string) {
-  // biome-ignore lint/suspicious/noConsole: this is a CLI
+  // oxlint-disable-next-line no-console -- this is a CLI
   console.error(c.red(` ✘  ${msg}`));
 }
 
@@ -307,7 +307,7 @@ export function scanDiscriminators(schema: OpenAPI3, options: OpenAPITSOptions) 
       // prefer defined values over automatically inferred ones
       // the inferred enum values from the schema might not represent the actual enum values of the discriminator,
       // so if we have defined values, use them instead
-      // biome-ignore lint/style/noNonNullAssertion: we just checked for this
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- we just checked for this
       const mappedValues = defined ?? [inferred!];
 
       if (
@@ -395,7 +395,7 @@ export function walk(
 /** Print warning message */
 export function warn(msg: string, silent = false) {
   if (!silent) {
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.warn(c.yellow(` ⚠  ${msg}`));
   }
 }

@@ -439,9 +439,9 @@ const ESCAPED_CHARS: Record<string, string> = {
   "\u2029": "\\u2029",
   "\u0085": "\\u0085",
 };
-// biome-ignore lint/suspicious/noControlCharactersInRegex: control characters must be escaped
+// oxlint-disable-next-line no-control-regex -- control characters must be escaped
 const ESCAPE_RE = /[\\"\u0000-\u001f\u2028\u2029\u0085]/g;
-// biome-ignore lint/suspicious/noControlCharactersInRegex: matches everything outside ASCII
+// oxlint-disable-next-line no-control-regex -- matches everything outside ASCII
 const NON_ASCII_RE = /[^\u0000-\u007F]/g;
 
 function utf16Escape(charCode: number): string {

@@ -4,7 +4,7 @@ Contributions are welcome!
 
 ## Setup
 
-This monorepo uses [pnpm workspaces](https://pnpm.io/) that lets packages pull from local versions rather than remote. It also uses [Turborepo](https://turbo.build/repo/docs) to run commands more easily. After installing pnpm, running the following commands from the root will set everything up:
+This monorepo uses [pnpm workspaces](https://pnpm.io/) that lets packages pull from local versions rather than remote. It also uses [Vite+](https://viteplus.dev) (`vp`) to build, lint, format, and test, and to run commands across packages. After installing pnpm, running the following commands from the root will set everything up:
 
 ```sh
 pnpm i
@@ -21,7 +21,7 @@ It’s worth noting that some packages depend on others in the monorepo. For exa
 >
 > Note that if any package changes, be sure to rebuild before running tests! Of course, CI will always do this, but in case you see differences between local vs CI, this is usually the culprit—a stale build.
 
-Again, Turborepo is there so that you don’t have to think about all the packages as much, if you’re just contributing to one. But these tips may help you troubleshoot if something unexpected happens.
+Again, `vp run` is there so that you don’t have to think about all the packages as much, if you’re just contributing to one. But these tips may help you troubleshoot if something unexpected happens.
 
 ## Structure
 

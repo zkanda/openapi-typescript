@@ -114,12 +114,12 @@ pnpm test -- [partial filename]
 To start the entire test suite in watch mode:
 
 ```sh
-npx vitest
+npx vp test
 ```
 
 ### Running linting
 
-Linting is handled via [Biome](https://biomejs.dev), a faster ESLint replacement. It was installed with `pnpm i` and can be run with:
+Formatting, linting, and type checking are handled via [Vite+](https://viteplus.dev) (Oxfmt, Oxlint, and the TypeScript Go type checker). It was installed with `pnpm i` and can be run with:
 
 ```sh
 pnpm run lint

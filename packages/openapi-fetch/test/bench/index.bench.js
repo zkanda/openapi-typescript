@@ -2,7 +2,7 @@ import axios from "axios";
 import { createApiFetchClient } from "feature-fetch";
 import { Fetcher } from "openapi-typescript-fetch";
 import superagent from "superagent";
-import { afterAll, bench, describe, vi } from "vitest";
+import { afterAll, test, describe, vi } from "vite-plus/test";
 import createClient, { createPathBasedClient } from "../../dist/index.mjs";
 import * as openapiTSCodegen from "./openapi-typescript-codegen.min.js";
 
@@ -23,30 +23,40 @@ afterAll(() => {
 });
 
 describe("setup", () => {
-  bench("openapi-fetch", async () => {
-    createClient({ baseUrl: BASE_URL });
+  test("openapi-fetch", async ({ bench }) => {
+    await bench("openapi-fetch", async () => {
+      createClient({ baseUrl: BASE_URL });
+    }).run();
   });
 
-  bench("openapi-fetch (path based)", async () => {
-    createPathBasedClient({ baseUrl: BASE_URL });
+  test("openapi-fetch (path based)", async ({ bench }) => {
+    await bench("openapi-fetch (path based)", async () => {
+      createPathBasedClient({ baseUrl: BASE_URL });
+    }).run();
   });
 
-  bench("openapi-typescript-fetch", async () => {
-    const fetcher = Fetcher.for();
-    fetcher.configure({
-      baseUrl: BASE_URL,
-    });
-    fetcher.path("/pet/findByStatus").method("get").create();
+  test("openapi-typescript-fetch", async ({ bench }) => {
+    await bench("openapi-typescript-fetch", async () => {
+      const fetcher = Fetcher.for();
+      fetcher.configure({
+        baseUrl: BASE_URL,
+      });
+      fetcher.path("/pet/findByStatus").method("get").create();
+    }).run();
   });
 
-  bench("axios", async () => {
-    axios.create({
-      baseURL: BASE_URL,
-    });
+  test("axios", async ({ bench }) => {
+    await bench("axios", async () => {
+      axios.create({
+        baseURL: BASE_URL,
+      });
+    }).run();
   });
 
-  bench("feature-fetch", async () => {
-    createApiFetchClient({ prefixUrl: BASE_URL });
+  test("feature-fetch", async ({ bench }) => {
+    await bench("feature-fetch", async () => {
+      createApiFetchClient({ prefixUrl: BASE_URL });
+    }).run();
   });
 
   // superagent: N/A
@@ -65,32 +75,46 @@ describe("get (only URL)", () => {
   });
   const featureFetch = createApiFetchClient({ prefixUrl: BASE_URL });
 
-  bench("openapi-fetch", async () => {
-    await openapiFetch.GET("/url");
+  test("openapi-fetch", async ({ bench }) => {
+    await bench("openapi-fetch", async () => {
+      await openapiFetch.GET("/url");
+    }).run();
   });
 
-  bench("openapi-fetch (path based)", async () => {
-    await openapiFetchPath["/url"].GET();
+  test("openapi-fetch (path based)", async ({ bench }) => {
+    await bench("openapi-fetch (path based)", async () => {
+      await openapiFetchPath["/url"].GET();
+    }).run();
   });
 
-  bench("openapi-typescript-fetch", async () => {
-    await openapiTSFetchGET();
+  test("openapi-typescript-fetch", async ({ bench }) => {
+    await bench("openapi-typescript-fetch", async () => {
+      await openapiTSFetchGET();
+    }).run();
   });
 
-  bench("openapi-typescript-codegen", async () => {
-    await openapiTSCodegen.PullsService.pullsGet("test1", "test2", "test3");
+  test("openapi-typescript-codegen", async ({ bench }) => {
+    await bench("openapi-typescript-codegen", async () => {
+      await openapiTSCodegen.PullsService.pullsGet("test1", "test2", "test3");
+    }).run();
   });
 
-  bench("axios", async () => {
-    await axiosInstance.get("/url");
+  test("axios", async ({ bench }) => {
+    await bench("axios", async () => {
+      await axiosInstance.get("/url");
+    }).run();
   });
 
-  bench("superagent", async () => {
-    await superagent.get(`${BASE_URL}/url`);
+  test("superagent", async ({ bench }) => {
+    await bench("superagent", async () => {
+      await superagent.get(`${BASE_URL}/url`);
+    }).run();
   });
 
-  bench("feature-fetch", async () => {
-    await featureFetch.get("/url");
+  test("feature-fetch", async ({ bench }) => {
+    await bench("feature-fetch", async () => {
+      await featureFetch.get("/url");
+    }).run();
   });
 });
 
@@ -117,41 +141,55 @@ describe("get (headers)", () => {
     headers: { "x-base-header": "123" },
   });
 
-  bench("openapi-fetch", async () => {
-    await openapiFetch.GET("/url", {
-      headers: { "x-header-1": 123, "x-header-2": 456 },
-    });
+  test("openapi-fetch", async ({ bench }) => {
+    await bench("openapi-fetch", async () => {
+      await openapiFetch.GET("/url", {
+        headers: { "x-header-1": 123, "x-header-2": 456 },
+      });
+    }).run();
   });
 
-  bench("openapi-fetch (path based)", async () => {
-    await openapiFetchPath["/url"].GET({
-      headers: { "x-header-1": 123, "x-header-2": 456 },
-    });
+  test("openapi-fetch (path based)", async ({ bench }) => {
+    await bench("openapi-fetch (path based)", async () => {
+      await openapiFetchPath["/url"].GET({
+        headers: { "x-header-1": 123, "x-header-2": 456 },
+      });
+    }).run();
   });
 
-  bench("openapi-typescript-fetch", async () => {
-    await openapiTSFetchGET(null, {
-      headers: { "x-header-1": 123, "x-header-2": 456 },
-    });
+  test("openapi-typescript-fetch", async ({ bench }) => {
+    await bench("openapi-typescript-fetch", async () => {
+      await openapiTSFetchGET(null, {
+        headers: { "x-header-1": 123, "x-header-2": 456 },
+      });
+    }).run();
   });
 
-  bench("openapi-typescript-codegen", async () => {
-    await openapiTSCodegen.PullsService.pullsGet("test1", "test2", "test3");
+  test("openapi-typescript-codegen", async ({ bench }) => {
+    await bench("openapi-typescript-codegen", async () => {
+      await openapiTSCodegen.PullsService.pullsGet("test1", "test2", "test3");
+    }).run();
   });
 
-  bench("axios", async () => {
-    await axiosInstance.get("/url", {
-      headers: { "x-header-1": 123, "x-header-2": 456 },
-    });
+  test("axios", async ({ bench }) => {
+    await bench("axios", async () => {
+      await axiosInstance.get("/url", {
+        headers: { "x-header-1": 123, "x-header-2": 456 },
+      });
+    }).run();
   });
 
-  bench("superagent", async () => {
-    await superagent.get(`${BASE_URL}/url`).set("x-header-1", 123).set("x-header-2", 456);
+  test("superagent", async ({ bench }) => {
+    await bench("superagent", async () => {
+      await superagent.get(`${BASE_URL}/url`).set("x-header-1", 123).set("x-header-2", 456);
+    }).run();
   });
 
-  bench("feature-fetch", async () => {
-    await featureFetch.get("/url", {
-      headers: { "x-header-1": "123", "x-header-2": "456" },
-    });
+  test("feature-fetch", async ({ bench }) => {
+    await bench("feature-fetch", async () => {
+      await featureFetch.get("/url", {
+        headers: { "x-header-1": "123", "x-header-2": "456" },
+      });
+    }).run();
   });
 });

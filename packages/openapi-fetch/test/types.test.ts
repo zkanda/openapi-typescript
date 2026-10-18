@@ -1,5 +1,5 @@
 import type { ErrorResponse, GetResponseContent, OkStatus, SuccessResponse } from "openapi-typescript-helpers";
-import { assertType, describe, test } from "vitest";
+import { assertType, describe, test } from "vite-plus/test";
 
 describe("types", () => {
   describe("GetResponseContent", () => {

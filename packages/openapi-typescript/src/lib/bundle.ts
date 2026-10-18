@@ -536,7 +536,7 @@ const OAS3_1: Record<string, TypeDef> = {
       oneOf: "SchemaList",
       not: "Schema",
       if: "Schema",
-      // biome-ignore lint/suspicious/noThenProperty: JSON Schema keyword
+      // oxlint-disable-next-line unicorn/no-thenable -- JSON Schema keyword
       then: "Schema",
       else: "Schema",
       dependentSchemas: "SchemaMap",

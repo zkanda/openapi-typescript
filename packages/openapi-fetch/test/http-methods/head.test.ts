@@ -1,5 +1,5 @@
 import { describe } from "node:test";
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { createObservedClient } from "../helpers.js";
 import type { paths } from "./schemas/head.js";
 
