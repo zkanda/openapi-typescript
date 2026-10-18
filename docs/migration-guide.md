@@ -3,9 +3,40 @@ title: Migration Guide
 description: Migrating between openapi-typescript versions
 ---
 
-# Migrating to the TypeScript 7–compatible release
+# Migrating to 8.x
 
 openapi-typescript no longer depends on the `typescript` package (or on `@redocly/openapi-core`). It now ships its own small loader and bundler, so the generator runs regardless of which TypeScript version is installed in your project, including TypeScript 7. For the options that remain, the generated output is identical to before.
+
+### Packages renamed
+
+All packages are now published under the `@zkanda` scope:
+
+| Before                       | After                                |
+| :--------------------------- | :----------------------------------- |
+| `openapi-typescript`         | `@zkanda/openapi-typescript`         |
+| `openapi-fetch`              | `@zkanda/openapi-fetch`              |
+| `openapi-typescript-helpers` | `@zkanda/openapi-typescript-helpers` |
+
+Swap the packages:
+
+```bash
+npm uninstall openapi-typescript openapi-fetch
+npm i @zkanda/openapi-fetch
+npm i -D @zkanda/openapi-typescript
+```
+
+Then update imports:
+
+```diff
+- import createClient from "openapi-fetch";
++ import createClient from "@zkanda/openapi-fetch";
+```
+
+The CLI command is still `openapi-typescript`, so `package.json` scripts keep working once the new package is installed. Generated types don’t import anything, so they don’t need regenerating.
+
+### Node.js 22 or later
+
+openapi-typescript requires Node.js 22 or later.
 
 ### `openapiTS()` returns a string
 
