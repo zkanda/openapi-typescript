@@ -64,6 +64,7 @@ export default async function openapiTS(
     resolve($ref) {
       return resolveRef(schema, $ref, { silent: options.silent ?? false });
     },
+    transform: options.transform,
   };
 
   const transformT = performance.now();

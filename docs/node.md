@@ -51,7 +51,38 @@ fs.writeFileSync("./my-schema.ts", COMMENT_HEADER + output);
 
 The Node API supports all the [CLI flags](/cli#flags) in `camelCase` format, plus the following additional options:
 
-| Name     |      Type       |     Default     | Description                                                                                  |
-| :------- | :-------------: | :-------------: | :------------------------------------------------------------------------------------------- |
-| `silent` |    `boolean`    |     `false`     | Silence warning messages (fatal errors will still show)                                      |
-| `cwd`    | `string \| URL` | `process.cwd()` | (optional) Provide the current working directory to help resolve remote `$ref`s (if needed). |
+| Name        |      Type       |     Default     | Description                                                                                  |
+| :---------- | :-------------: | :-------------: | :------------------------------------------------------------------------------------------- |
+| `silent`    |    `boolean`    |     `false`     | Silence warning messages (fatal errors will still show)                                      |
+| `cwd`       | `string \| URL` | `process.cwd()` | (optional) Provide the current working directory to help resolve remote `$ref`s (if needed). |
+| `transform` |   `Function`    |                 | Override the TypeScript type for certain Schema Objects ([docs](#transform))                 |
+
+### transform
+
+Use `transform()` to replace the generated type for specific Schema Objects. It receives each Schema Object that has a `type`, and returns TypeScript source as a string, or `undefined` to keep the default type.
+
+A common use is file uploads, where `format: binary` should be a `Blob`:
+
+```ts
+const output = await openapiTS(new URL("./my-schema.yaml", import.meta.url), {
+  transform(schemaObject) {
+    if ("format" in schemaObject && schemaObject.format === "binary") {
+      return "Blob";
+    }
+  },
+});
+```
+
+```ts
+// before
+file: string;
+// after
+file: Blob;
+```
+
+Notes:
+
+- The returned string is printed as-is, so it must be valid TypeScript. Unions are parenthesized where needed (`(Blob | File)[]`).
+- `nullable: true` (OpenAPI 3.0) still adds `| null`. For OpenAPI 3.1, `type: ["string", "null"]` is passed to `transform()` as-is, so include `| null` yourself.
+- Only change types to match what the data actually is at runtime. JSON responses deliver `format: date-time` as a string, so mapping it to `Date` would be wrong unless your client converts it.
+

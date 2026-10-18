@@ -56,7 +56,7 @@ fs.writeFileSync("./my-schema.d.ts", COMMENT_HEADER + output);
 
 Dropping the TypeScript compiler API removes the TypeScript version lock, but costs some flexibility:
 
-- **No AST hooks.** `transform`, `postTransform`, and `transformProperty` took or returned TypeScript AST nodes and are gone. Customizations such as mapping `format: date-time` to `Date` now mean changing the schema or post-processing the output string.
+- **Fewer hooks.** [`transform()`](./node#transform) now returns TypeScript source as a string instead of a `ts.TypeNode`. `postTransform` and `transformProperty` worked on TypeScript AST nodes and are gone.
 - **Helpers use the package’s own node types.** `astToString()`, `tsUnion()`, `tsLiteral()`, `oapiRef()`, and the other exported helpers take and return the package’s minimal AST, not `ts.TypeNode`. Code that mixed them with `ts.factory` needs rewriting.
 - **Output is a string.** To run TypeScript transformers on it, parse it again yourself.
 - **Printing is maintained here.** Escaping, quoting, and formatting are reimplemented for what the generator emits, so they no longer get fixes from the TypeScript printer. Output for the GitHub, Stripe, DigitalOcean, and Octokit example schemas is byte-identical to the TypeScript printer’s.
@@ -65,7 +65,7 @@ Dropping the TypeScript compiler API removes the TypeScript version lock, but co
 
 - `typescript` is no longer a peer dependency.
 - CLI flags: `--enum`, `--enum-values`, `--conditional-enums`, `--dedupe-enums`, `--export-type` (`-t`), `--immutable`, `--array-length`, `--path-params-as-types`, `--alphabetize`, `--root-types`, `--root-types-no-schema-prefix`, `--root-types-keep-casing`, `--make-paths-enum`, `--generate-path-params`, and `--read-write-markers` (the generator no longer emits `$Read`/`$Write` markers).
-- Node.js API options: `inject`, `transform`, `postTransform`, and `transformProperty`.
+- Node.js API options: `inject`, `postTransform`, and `transformProperty`. `transform` remains, but returns a string (see [Trade-offs](#trade-offs-of-the-built-in-ast)).
 - Redocly config support: `--redocly` (`-c`), `redocly.yaml` `apis` / `x-openapi-ts` settings, and multiple-schema config. To generate types for multiple schemas, [run the CLI once per schema](./cli#multiple-schemas).
 - Redocly lint rules: linting now only reports unresolved `$ref`s and duplicate `operationId`s (as errors). No other lint rules run.
 - The `openapi-react-query`, `swr-openapi`, and `openapi-metadata` packages.

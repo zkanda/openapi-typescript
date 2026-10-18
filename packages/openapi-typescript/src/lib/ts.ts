@@ -20,7 +20,9 @@ export type TypeNode =
   | { kind: "tuple"; elements: TypeNode[] }
   | { kind: "union"; types: TypeNode[] }
   | { kind: "intersection"; types: TypeNode[] }
-  | { kind: "object"; members: Member[] };
+  | { kind: "object"; members: Member[] }
+  /** TypeScript type source printed verbatim (from the `transform` option) */
+  | { kind: "verbatim"; text: string };
 
 /** Property signature (or index signature, if `indexSignature` is set) */
 export interface Member {
@@ -367,6 +369,7 @@ function printType(type: TypeNode, level: number): string {
     case "keyword":
       return type.name;
     case "literal":
+    case "verbatim":
       return type.text;
     case "ref":
       return type.args ? `${type.name}<${type.args.map((t) => printType(t, level)).join(", ")}>` : type.name;
@@ -374,7 +377,7 @@ function printType(type: TypeNode, level: number): string {
       return `${printType(type.object, level)}[${tsStringLiteral(type.index)}]`;
     case "array": {
       const element = printType(type.element, level);
-      return type.element.kind === "union" || type.element.kind === "intersection" ? `(${element})[]` : `${element}[]`;
+      return needsParens(type.element) ? `(${element})[]` : `${element}[]`;
     }
     case "tuple": {
       const pad = INDENT.repeat(level);
@@ -386,7 +389,7 @@ function printType(type: TypeNode, level: number): string {
       return type.types
         .map((t) => {
           const printed = printType(t, level);
-          return t.kind === "union" || t.kind === "intersection" ? `(${printed})` : printed;
+          return needsParens(t) ? `(${printed})` : printed;
         })
         .join(type.kind === "union" ? " | " : " & ");
     case "object":
@@ -395,6 +398,15 @@ function printType(type: TypeNode, level: number): string {
       }
       return `{\n${type.members.map((m) => printMember(m, level + 1)).join("\n")}\n${INDENT.repeat(level)}}`;
   }
+}
+
+/** Whether a type must be parenthesized inside an array, union, or intersection */
+function needsParens(type: TypeNode): boolean {
+  return (
+    type.kind === "union" ||
+    type.kind === "intersection" ||
+    (type.kind === "verbatim" && /[|&?]|=>|\b(?:keyof|readonly|unique)\b/.test(type.text))
+  );
 }
 
 function printMember(member: Member, level: number): string {

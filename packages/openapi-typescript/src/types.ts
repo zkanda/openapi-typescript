@@ -631,6 +631,11 @@ export interface OpenAPITSOptions {
   silent?: boolean;
   /** Treat all objects as if they have \`required\` set to all properties by default (default: false) */
   propertiesRequiredByDefault?: boolean;
+  /**
+   * Override the type of Schema Objects that have a `type`. Return TypeScript type source (e.g. `"Blob"`),
+   * or `undefined` to keep the default type.
+   */
+  transform?: (schemaObject: SchemaObject, options: TransformNodeOptions) => string | undefined;
 }
 
 /** Context passed to all submodules */
@@ -650,6 +655,7 @@ export interface GlobalContext {
   silent: boolean;
   /** retrieve a node by $ref */
   resolve<T>($ref: string): T | undefined;
+  transform?: OpenAPITSOptions["transform"];
 }
 
 export type $defs = Record<string, SchemaObject>;
