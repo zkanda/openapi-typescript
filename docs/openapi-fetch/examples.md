@@ -6,17 +6,13 @@ title: openapi-fetch Examples
 
 Example code of using openapi-fetch with other frameworks and libraries.
 
-## React + React Query
-
-See [openapi-react-query](/openapi-react-query/)
-
 ## React + SWR
 
 See [swr-openapi](https://github.com/htunnicliff/swr-openapi)
 
 ## Next.js
 
-[Next.js](https://nextjs.org/) is the most popular SSR framework for React. While [React Query](#react--react-query) is recommended for all clientside fetching with openapi-fetch (not SWR), this example shows how to take advantage of Next.js’s [server-side fetching](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#fetching-data-on-the-server-with-fetch) with built-in caching.
+[Next.js](https://nextjs.org/) is the most popular SSR framework for React. This example shows how to take advantage of Next.js’s [server-side fetching](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#fetching-data-on-the-server-with-fetch) with built-in caching.
 
 [View a code example in GitHub](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-fetch/examples/nextjs)
 

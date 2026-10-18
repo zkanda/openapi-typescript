@@ -15,77 +15,13 @@ To enable debugging, set `DEBUG=openapi-ts:*` as an env var like so:
 $ DEBUG=openapi-ts:* npx openapi-typescript schema.yaml -o my-types.ts
 ```
 
-To only see certain types of debug messages, you can set `DEBUG=openapi-ts:[scope]` instead. Valid scopes are `redoc`, `lint`, `bundle`, and `ts`.
+To only see certain types of debug messages, you can set `DEBUG=openapi-ts:[scope]` instead. Valid scopes are `bundle` and `ts`.
 
 Note that debug messages will be suppressed if the output is `stdout`.
-
-## Enum extensions
-
-`x-enum-varnames` can be used to have another enum name for the corresponding value. This is used to define names of the enum items.
-
-`x-enum-descriptions` can be used to provide an individual description for each value. This is used for comments in the code (like javadoc if the target language is java).
-
-`x-enum-descriptions` and `x-enum-varnames` are each expected to be list of items containing the same number of items as enum. The order of the items in the list matters: their position is used to group them together.
-
-Example:
-
-::: code-group
-
-```yaml [my-openapi-3-schema.yaml]
-ErrorCode:
-  type: integer
-  format: int32
-  enum:
-    - 100
-    - 200
-    - 300
-  x-enum-varnames:
-    - Unauthorized
-    - AccessDenied
-    - Unknown
-  x-enum-descriptions:
-    - "User is not authorized"
-    - "User has no access to this resource"
-    - "Something went wrong"
-```
-
-:::
-
-Will result in:
-
-::: code-group
-
-```ts [my-openapi-3-schema.d.ts]
-enum ErrorCode {
-  // User is not authorized
-  Unauthorized = 100
-  // User has no access to this resource
-  AccessDenied = 200
-  // Something went wrong
-  Unknown = 300
-}
-```
-
-:::
-
-To generate in this fashion, `--enum` needs to be specified on the [command line](cli.md#flags).
-
-Alternatively you can use `x-enumNames` and `x-enumDescriptions` ([NSwag/NJsonSchema](https://github.com/RicoSuter/NJsonSchema/wiki/Enums#enum-names-and-descriptions)).
 
 ## Styleguide
 
 Loose recommendations to improve type generation.
-
-### Redocly rules
-
-To reduce errors in TypeScript generation, the following built-in rules are recommended to enforce in your [Redocly config](https://redocly.com/docs/cli/rules/built-in-rules/):
-
-| Rule                                                                                          |    Setting     | Reason                         |
-| :-------------------------------------------------------------------------------------------- | :------------: | :----------------------------- |
-| [operation-operationId-unique](https://redocly.com/docs/cli/rules/built-in-rules/#operations) |    `error`     | Prevents invalid TS generation |
-| [operation-parameters-unique](https://redocly.com/docs/cli/rules/built-in-rules/#parameters)  |    `error`     | Prevents missing params        |
-| [path-not-include-query](https://redocly.com/docs/cli/rules/built-in-rules/#parameters)       |    `error`     | Prevents missing params        |
-| [spec](https://redocly.com/docs/cli/rules/built-in-rules/#special-rules)                      | `3.0` or `3.1` | Enables better schema checks   |
 
 ### Embrace `snake_case` in JS
 
@@ -245,16 +181,6 @@ number[]
         ✅ Best
       </th>
       <td>
-
-```yaml
-type: array
-items:
-  type: number
-maxItems: 2
-minItems: 2
-```
-
-— or —
 
 ```yaml
 type: array
