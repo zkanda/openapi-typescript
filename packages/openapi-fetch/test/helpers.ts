@@ -1,4 +1,4 @@
-import type { MediaType } from "openapi-typescript-helpers";
+import type { MediaType } from "@zkanda/openapi-typescript-helpers";
 import createClient from "../src/index.js";
 
 /**

@@ -49,7 +49,7 @@ export default defineConfig({
             { text: "CLI", link: "/cli" },
             { text: "Node.js API", link: "/node" },
             { text: "Examples", link: "/examples" },
-            { text: "Migrating from 6.x", link: "/migration-guide" },
+            { text: "Migration Guide", link: "/migration-guide" },
             { text: "Advanced", link: "/advanced" },
           ],
         },
@@ -69,23 +69,15 @@ export default defineConfig({
         { text: "About", link: "/about" },
       ],
     },
-    search: {
-      provider: "algolia",
-      options: {
-        appId: "NA92XVKBVS",
-        apiKey: "4f3ce9ca7edc3b83c209e6656ab29eb8",
-        indexName: "openapi-ts",
-      },
-    },
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/openapi-ts/openapi-typescript",
+        link: "https://github.com/zkanda/openapi-typescript",
       },
     ],
     footer: {
       message:
-        'Released under the <a href="https://github.com/openapi-ts/openapi-typescript/blob/main/packages/openapi-typescript/LICENSE">MIT License</a>. Powered by <a href="https://netlify.com">Netlify</a>.',
+        'Released under the <a href="https://github.com/openapi-ts/openapi-typescript/blob/main/packages/openapi-typescript/LICENSE">MIT License</a>.',
     },
   },
 });

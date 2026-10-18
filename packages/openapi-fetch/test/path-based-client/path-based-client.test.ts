@@ -1,4 +1,4 @@
-import type { MediaType } from "openapi-typescript-helpers";
+import type { MediaType } from "@zkanda/openapi-typescript-helpers";
 import { describe, expect, expectTypeOf, test } from "vite-plus/test";
 import { createPathBasedClient, type PathBasedClient } from "../../src/index.js";
 import type { paths } from "./schemas/path-based-client.js";

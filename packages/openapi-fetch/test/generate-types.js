@@ -1,6 +1,6 @@
 // Regenerates test schema types. Add more schemas here!
 import fs from "node:fs";
-import openapiTS, { COMMENT_HEADER } from "openapi-typescript";
+import openapiTS, { COMMENT_HEADER } from "@zkanda/openapi-typescript";
 
 const schemas = {
   "./common/schemas/common.yaml": "./common/schemas/common.d.ts",

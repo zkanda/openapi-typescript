@@ -197,6 +197,11 @@ export default function transformSchemaObject(
  */
 function transformSchemaObjectCore(schemaObject: SchemaObject, options: TransformNodeOptions): TypeNode | undefined {
   if ("type" in schemaObject && schemaObject.type) {
+    const transformed = options.ctx.transform?.(schemaObject, options);
+    if (transformed !== undefined) {
+      return { kind: "verbatim", text: transformed };
+    }
+
     // primitives
     // type: null
     if (schemaObject.type === "null") {

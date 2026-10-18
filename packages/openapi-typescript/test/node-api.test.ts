@@ -259,6 +259,50 @@ export type operations = Record<string, never>;`,
       },
     ],
     [
+      "options > transform",
+      {
+        given: {
+          openapi: "3.1.0",
+          info: { title: "test", version: "1.0" },
+          components: {
+            schemas: {
+              Upload: {
+                type: "object",
+                required: ["file"],
+                properties: {
+                  file: { type: "string", format: "binary" },
+                  uploadedAt: { type: "string", format: "date-time" },
+                },
+              },
+            },
+          },
+        },
+        want: `export type paths = Record<string, never>;
+export type webhooks = Record<string, never>;
+export interface components {
+    schemas: {
+        Upload: {
+            /** Format: binary */
+            file: Blob;
+            /** Format: date-time */
+            uploadedAt?: string;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
+}
+export type $defs = Record<string, never>;
+export type operations = Record<string, never>;`,
+        options: {
+          transform: (schemaObject) =>
+            "format" in schemaObject && schemaObject.format === "binary" ? "Blob" : undefined,
+        },
+      },
+    ],
+    [
       "snapshot > Stripe",
       {
         given: new URL("./stripe-api.yaml", EXAMPLES_DIR),

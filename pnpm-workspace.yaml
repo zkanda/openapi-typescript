@@ -3,11 +3,11 @@ packages:
   - packages/**
 
 catalog:
-  execa: ^9.6.1
-  typescript: ^5.9.3
+  execa: ^10.2.0
+  typescript: ^7.0.2
   vite: npm:@voidzero-dev/vite-plus-core@1.3.0
-  vitest: 5.0.5
   vite-plus: 1.3.0
+  vitest: 5.0.5
 
 ignoredBuiltDependencies:
   - '@swc/core'
@@ -19,6 +19,7 @@ ignoredBuiltDependencies:
 overrides:
   vite@*: 'catalog:'
   vitest@*: 'catalog:'
+
 peerDependencyRules:
   allowAny:
     - vite

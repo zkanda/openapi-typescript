@@ -14,13 +14,13 @@ The CLI is the most common way to use openapi-typescript. The CLI can parse JSON
 The simplest way to transform schemas is by specifying an input schema (JSON or YAML), followed by `--output` (`-o`) where you’d like the output to be saved:
 
 ```bash
-npx openapi-typescript schema.yaml -o schema.ts
+npx @zkanda/openapi-typescript schema.yaml -o schema.ts
 
 # 🚀 schema.yaml -> schema.ts [50ms]
 ```
 
 ```bash
-npx openapi-typescript https://petstore3.swagger.io/api/v3/openapi.yaml -o petstore.d.ts
+npx @zkanda/openapi-typescript https://petstore3.swagger.io/api/v3/openapi.yaml -o petstore.d.ts
 
 # 🚀 https://petstore3.swagger.io/api/v3/openapi.yaml -> petstore.d.ts [250ms]
 ```
@@ -28,7 +28,7 @@ npx openapi-typescript https://petstore3.swagger.io/api/v3/openapi.yaml -o petst
 If no input is given, the schema is read from stdin:
 
 ```bash
-cat schema.yaml | npx openapi-typescript -o schema.ts
+cat schema.yaml | npx @zkanda/openapi-typescript -o schema.ts
 ```
 
 ### Multiple schemas
@@ -59,7 +59,7 @@ Globbing is not supported. Run openapi-typescript once per schema.
 The CLI doesn’t send any custom headers or credentials when fetching remote schemas. For non-public schemas, download the schema first with your tool of choice, then pass the local file (or pipe it via stdin):
 
 ```bash
-curl -H "X-API-KEY: $SECRET_KEY" https://api.example.com/v2/openapi.yaml | npx openapi-typescript -o schema.ts
+curl -H "X-API-KEY: $SECRET_KEY" https://api.example.com/v2/openapi.yaml | npx @zkanda/openapi-typescript -o schema.ts
 ```
 
 ## Flags

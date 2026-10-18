@@ -1,6 +1,6 @@
 import client from "#/lib";
 import { ref } from "vue";
-import type { ParamsOption, RequestBodyOption } from "openapi-fetch";
+import type { ParamsOption, RequestBodyOption } from "@zkanda/openapi-fetch";
 import type { paths } from "#/generated/catfact";
 
 interface AppError {

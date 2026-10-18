@@ -6,15 +6,15 @@
     "dev": "next dev"
   },
   "dependencies": {
-    "next": "^15.5.12",
-    "openapi-fetch": "workspace:^",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "@zkanda/openapi-fetch": "workspace:^",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "openapi-typescript": "workspace:^",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@zkanda/openapi-typescript": "workspace:^",
     "typescript": "catalog:"
   }
 }

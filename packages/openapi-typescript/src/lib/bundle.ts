@@ -3,7 +3,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-import yaml from "js-yaml";
+import { CORE_SCHEMA, binaryTag, load, mergeTag, omapTag, pairsTag, setTag } from "js-yaml";
 import type { OpenAPI3 } from "../types.js";
 import { debug, error, escapePointer, parseRef } from "./utils.js";
 
@@ -40,15 +40,12 @@ interface Location {
   pointer: string;
 }
 
-// Same YAML schema Redocly used: JSON schema + merge keys, no timestamps
-const { types: yamlTypes } = yaml as unknown as { types: Record<string, yaml.Type> }; // missing from @types/js-yaml
-const YAML_SCHEMA = yaml.JSON_SCHEMA.extend({
-  implicit: [yamlTypes.merge],
-  explicit: [yamlTypes.binary, yamlTypes.omap, yamlTypes.pairs, yamlTypes.set],
-});
+// Same YAML schema Redocly used: JSON schema + merge keys, no timestamps.
+// js-yaml 5's CORE_SCHEMA matches js-yaml 4's (lenient) JSON_SCHEMA.
+const YAML_SCHEMA = CORE_SCHEMA.withTags(mergeTag, binaryTag, omapTag, pairsTag, setTag);
 
 function parseYaml(source: string, filename: string): unknown {
-  return yaml.load(source, { schema: YAML_SCHEMA, filename });
+  return load(source, { schema: YAML_SCHEMA, filename });
 }
 
 function isPlainObject(value: unknown): value is Record<string, any> {

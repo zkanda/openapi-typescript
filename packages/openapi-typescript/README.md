@@ -4,9 +4,6 @@ openapi-typescript turns [OpenAPI 3.0 & 3.1](https://spec.openapis.org/oas/lates
 
 The code is [MIT-licensed](./LICENSE) and free for use.
 
-> **Tip:**
-> New to OpenAPI? Speakeasy’s [Intro to OpenAPI](https://www.speakeasyapi.dev/openapi) is an accessible guide to newcomers that explains the “why” and “how” of OpenAPI.
-
 ## Features
 
 - ✅ Supports OpenAPI 3.0 and 3.1 (including advanced features like [discriminators](https://spec.openapis.org/oas/v3.1.0#discriminator-object))
@@ -25,7 +22,7 @@ _Note: OpenAPI 2.x is supported with versions `5.x` and previous_
 This library requires the latest version of [Node.js](https://nodejs.org) installed (20.x or higher recommended). With that present, run the following in your project:
 
 ```bash
-npm i -D openapi-typescript
+npm i -D @zkanda/openapi-typescript
 ```
 
 And in your `tsconfig.json`, to load the types properly:
@@ -52,15 +49,15 @@ And in your `tsconfig.json`, to load the types properly:
 
 ## Basic usage
 
-First, generate a local type file by running `npx openapi-typescript`, first specifying your input schema (JSON or YAML), and where you’d like the `--output` (`-o`) to be saved:
+First, generate a local type file by running `npx @zkanda/openapi-typescript`, first specifying your input schema (JSON or YAML), and where you’d like the `--output` (`-o`) to be saved:
 
 ```bash
 # Local schema
-npx openapi-typescript ./path/to/my/schema.yaml -o ./path/to/my/schema.d.ts
+npx @zkanda/openapi-typescript ./path/to/my/schema.yaml -o ./path/to/my/schema.d.ts
 # 🚀 ./path/to/my/schema.yaml -> ./path/to/my/schema.d.ts [7ms]
 
 # Remote schema
-npx openapi-typescript https://myapi.dev/api/v1/openapi.yaml -o ./path/to/my/schema.d.ts
+npx @zkanda/openapi-typescript https://myapi.dev/api/v1/openapi.yaml -o ./path/to/my/schema.d.ts
 # 🚀 https://myapi.dev/api/v1/openapi.yaml -> ./path/to/my/schema.d.ts [250ms]
 ```
 

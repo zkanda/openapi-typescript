@@ -1,4 +1,4 @@
-import type { ErrorResponse, GetResponseContent, OkStatus, SuccessResponse } from "openapi-typescript-helpers";
+import type { ErrorResponse, GetResponseContent, OkStatus, SuccessResponse } from "@zkanda/openapi-typescript-helpers";
 import { assertType, describe, test } from "vite-plus/test";
 
 describe("types", () => {
