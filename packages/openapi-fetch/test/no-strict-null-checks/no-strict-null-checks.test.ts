@@ -1,4 +1,4 @@
-import { assertType, describe, expect, test } from "vitest";
+import { assertType, describe, expect, test } from "vite-plus/test";
 import type { components, paths } from "../common/schemas/common.js";
 import { createObservedClient } from "../helpers.js";
 

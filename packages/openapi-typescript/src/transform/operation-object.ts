@@ -1,5 +1,4 @@
-import ts from "typescript";
-import { addJSDocComment, NEVER, oapiRef, QUESTION_TOKEN, tsModifiers, tsPropertyIndex } from "../lib/ts.js";
+import { addJSDocComment, type Member, NEVER, oapiRef, tsPropertyIndex } from "../lib/ts.js";
 import { createRef } from "../lib/utils.js";
 import type { OperationObject, RequestBodyObject, TransformNodeOptions } from "../types.js";
 import { transformParametersArray } from "./parameters-array.js";
@@ -13,11 +12,11 @@ import transformResponsesObject from "./responses-object.js";
 export default function transformOperationObject(
   operationObject: OperationObject,
   options: TransformNodeOptions,
-): ts.TypeElement[] {
-  const type: ts.TypeElement[] = [];
+): Member[] {
+  const members: Member[] = [];
 
   // parameters
-  type.push(...transformParametersArray(operationObject.parameters ?? [], options));
+  members.push(...transformParametersArray(operationObject.parameters ?? [], options));
 
   // requestBody
   if (operationObject.requestBody) {
@@ -33,36 +32,17 @@ export default function transformOperationObject(
         ? options.ctx.resolve<RequestBodyObject>(operationObject.requestBody.$ref)
         : operationObject.requestBody
     )?.required;
-    const property = ts.factory.createPropertySignature(
-      /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-      /* name          */ tsPropertyIndex("requestBody"),
-      /* questionToken */ required ? undefined : QUESTION_TOKEN,
-      /* type          */ requestBodyType,
-    );
-    addJSDocComment(operationObject.requestBody, property);
-    type.push(property);
+    const member: Member = { name: "requestBody", optional: !required, type: requestBodyType };
+    addJSDocComment(operationObject.requestBody, member);
+    members.push(member);
   } else {
-    type.push(
-      ts.factory.createPropertySignature(
-        /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-        /* name          */ tsPropertyIndex("requestBody"),
-        /* questionToken */ QUESTION_TOKEN,
-        /* type          */ NEVER,
-      ),
-    );
+    members.push({ name: "requestBody", optional: true, type: NEVER });
   }
 
   // responses
-  type.push(
-    ts.factory.createPropertySignature(
-      /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-      /* name          */ tsPropertyIndex("responses"),
-      /* questionToken */ undefined,
-      /* type          */ transformResponsesObject(operationObject.responses ?? {}, options),
-    ),
-  );
+  members.push({ name: "responses", type: transformResponsesObject(operationObject.responses ?? {}, options) });
 
-  return type;
+  return members;
 }
 
 /** inject an operation at the top level */
@@ -72,33 +52,15 @@ export function injectOperationObject(
   options: TransformNodeOptions,
 ): void {
   // find or create top-level operations interface
-  let operations = options.ctx.injectFooter.find(
-    (node) => ts.isInterfaceDeclaration(node) && (node as ts.InterfaceDeclaration).name.text === "operations",
-  ) as unknown as ts.InterfaceDeclaration;
-  if (!operations) {
-    operations = ts.factory.createInterfaceDeclaration(
-      /* modifiers       */ tsModifiers({
-        export: true,
-        // important: do NOT make this immutable
-      }),
-      /* name            */ ts.factory.createIdentifier("operations"),
-      /* typeParameters  */ undefined,
-      /* heritageClauses */ undefined,
-      /* members         */ [],
-    );
+  let operations = options.ctx.injectFooter.find((node) => node.kind === "interface" && node.name === "operations");
+  if (operations?.kind !== "interface") {
+    operations = { kind: "interface", name: "operations", members: [] };
     options.ctx.injectFooter.push(operations);
   }
 
   // inject operation object
-  const type = transformOperationObject(operationObject, options);
-  // @ts-expect-error this is OK to mutate
-  operations.members = ts.factory.createNodeArray([
-    ...operations.members,
-    ts.factory.createPropertySignature(
-      /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-      /* name          */ tsPropertyIndex(operationId),
-      /* questionToken */ undefined,
-      /* type          */ ts.factory.createTypeLiteralNode(type),
-    ),
-  ]);
+  operations.members.push({
+    name: tsPropertyIndex(operationId),
+    type: { kind: "object", members: transformOperationObject(operationObject, options) },
+  });
 }

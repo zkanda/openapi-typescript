@@ -1,28 +1,46 @@
-import { escapePointer, parseRef } from "@redocly/openapi-core/lib/ref-utils.js";
 import c from "ansi-colors";
 import supportsColor from "supports-color";
-import ts from "typescript";
 import type { DiscriminatorObject, OpenAPI3, OpenAPITSOptions, ReferenceObject, SchemaObject } from "../types.js";
-import { tsLiteral, tsModifiers, tsPropertyIndex } from "./ts.js";
+import { type Member, tsLiteral, tsPropertyIndex } from "./ts.js";
 
 if (!supportsColor.stdout || supportsColor.stdout.hasBasic === false) {
   c.enabled = false;
 }
 
 const DEBUG_GROUPS: Record<string, c.StyleFunction | undefined> = {
-  redoc: c.cyanBright,
-  lint: c.yellowBright,
   bundle: c.magentaBright,
   ts: c.blueBright,
 };
 
 export { c };
 
+/** Escape a JSON Pointer segment */
+export function escapePointer<T extends string | number>(fragment: T): T {
+  if (typeof fragment === "number") {
+    return fragment;
+  }
+  return fragment.replace(/~/g, "~0").replace(/\//g, "~1") as T;
+}
+
+/** Unescape a JSON Pointer segment */
+export function unescapePointer(fragment: string): string {
+  return decodeURIComponent(fragment.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+/** Split a $ref into its URI (if any) and unescaped JSON Pointer segments */
+export function parseRef(ref: string): { uri: string | null; pointer: string[] } {
+  const [uri, pointer = ""] = ref.split("#/");
+  return {
+    uri: (uri.endsWith("#") ? uri.slice(0, -1) : uri) || null,
+    pointer: pointer
+      .split("/")
+      .map(unescapePointer)
+      .filter((p) => !!p),
+  };
+}
+
 /** Given a discriminator object, get the property name */
-export function createDiscriminatorProperty(
-  discriminator: DiscriminatorObject,
-  { path, readonly = false }: { path: string; readonly?: boolean },
-): ts.TypeElement {
+export function createDiscriminatorProperty(discriminator: DiscriminatorObject, { path }: { path: string }): Member {
   // get the inferred propertyName value from the last section of the path (as the spec suggests to do)
   let value = parseRef(path).pointer.pop();
   // if mapping, and there’s a match, use this rather than the inferred name
@@ -35,14 +53,7 @@ export function createDiscriminatorProperty(
       value = matchedValue[0]; // why was this designed backwards!?
     }
   }
-  return ts.factory.createPropertySignature(
-    /* modifiers     */ tsModifiers({
-      readonly,
-    }),
-    /* name          */ tsPropertyIndex(discriminator.propertyName),
-    /* questionToken */ undefined,
-    /* type          */ tsLiteral(value),
-  );
+  return { name: tsPropertyIndex(discriminator.propertyName), type: tsLiteral(value) };
 }
 
 /** Create a $ref pointer (even from other $refs) */
@@ -79,14 +90,14 @@ export function debug(msg: string, group?: string, time?: number) {
     if (typeof time === "number") {
       timeFormatted = c.green(` ${formatTime(time)} `);
     }
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.debug(`  ${c.bold(groupName)}${timeFormatted}${msg}`);
   }
 }
 
 /** Print error message */
 export function error(msg: string) {
-  // biome-ignore lint/suspicious/noConsole: this is a CLI
+  // oxlint-disable-next-line no-console -- this is a CLI
   console.error(c.red(` ✘  ${msg}`));
 }
 
@@ -104,18 +115,14 @@ export function formatTime(t: number) {
   return t;
 }
 
-/** Call Object.entries() and optionally sort */
+/** Call Object.entries() and optionally filter deprecated entries */
 export function getEntries<T>(
   obj: ArrayLike<T> | Record<string, T>,
   options?: {
-    alphabetize?: boolean;
     excludeDeprecated?: boolean;
   },
 ) {
   let entries = Object.entries(obj);
-  if (options?.alphabetize) {
-    entries.sort(([a], [b]) => a.localeCompare(b, "en-us", { numeric: true }));
-  }
   if (options?.excludeDeprecated) {
     entries = entries.filter(([, v]) => !(v && typeof v === "object" && "deprecated" in v && v.deprecated));
   }
@@ -126,7 +133,7 @@ export function getEntries<T>(
 export function resolveRef<T>(
   schema: any,
   $ref: string,
-  { silent = false, visited = [] }: { silent: boolean; visited?: string[] },
+  { silent, visited = [] }: { silent: boolean; visited?: string[] },
 ): T | undefined {
   const { pointer } = parseRef($ref);
   if (!pointer.length) {
@@ -300,7 +307,7 @@ export function scanDiscriminators(schema: OpenAPI3, options: OpenAPITSOptions) 
       // prefer defined values over automatically inferred ones
       // the inferred enum values from the schema might not represent the actual enum values of the discriminator,
       // so if we have defined values, use them instead
-      // biome-ignore lint/style/noNonNullAssertion: we just checked for this
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- we just checked for this
       const mappedValues = defined ?? [inferred!];
 
       if (
@@ -388,7 +395,7 @@ export function walk(
 /** Print warning message */
 export function warn(msg: string, silent = false) {
   if (!silent) {
-    // biome-ignore lint/suspicious/noConsole: this is a CLI
+    // oxlint-disable-next-line no-console -- this is a CLI
     console.warn(c.yellow(` ⚠  ${msg}`));
   }
 }

@@ -1,4 +1,4 @@
-import { assertType, expect, expectTypeOf, test } from "vitest";
+import { assertType, expect, expectTypeOf, test } from "vite-plus/test";
 import type { Middleware, MiddlewareCallbackParams } from "../../src/index.js";
 import { createObservedClient } from "../helpers.js";
 import type { paths } from "./schemas/middleware.js";
@@ -39,9 +39,8 @@ test("can modify request", async () => {
     return Response.json({});
   });
   client.use({
-    async onRequest({ request }) {
+    async onRequest() {
       return new Request("https://foo.bar/api/v1", {
-        ...request,
         method: "OPTIONS",
         headers: { foo: "bar" },
       });
@@ -98,7 +97,7 @@ test("can modify response", async () => {
 
 test("returns original errors if nothing is returned", async () => {
   const actualError = new Error();
-  const client = createObservedClient<paths>({}, async (req) => {
+  const client = createObservedClient<paths>({}, async () => {
     throw actualError;
   });
   client.use({
@@ -118,7 +117,7 @@ test("returns original errors if nothing is returned", async () => {
 test("can modify errors", async () => {
   const actualError = new Error();
   const modifiedError = new Error();
-  const client = createObservedClient<paths>({}, async (req) => {
+  const client = createObservedClient<paths>({}, async () => {
     throw actualError;
   });
   client.use({
@@ -137,7 +136,7 @@ test("can modify errors", async () => {
 test("can catch errors and return a response instead", async () => {
   const actualError = new Error();
   const customResponse = Response.json({});
-  const client = createObservedClient<paths>({}, async (req) => {
+  const client = createObservedClient<paths>({}, async () => {
     throw actualError;
   });
   client.use({
@@ -171,7 +170,7 @@ test("executes in expected order", async () => {
         if (response.headers.get("step") === "B") {
           const headers = new Headers(response.headers);
           headers.set("step", "A");
-          return new Response(response.body, { ...response, headers });
+          return new Response(response.body, { headers });
         }
       },
     },
@@ -184,7 +183,7 @@ test("executes in expected order", async () => {
         const headers = new Headers(response.headers);
         headers.set("step", "B");
         if (response.headers.get("step") === "C") {
-          return new Response(response.body, { ...response, headers });
+          return new Response(response.body, { headers });
         }
       },
     },
@@ -197,7 +196,7 @@ test("executes in expected order", async () => {
         const headers = new Headers(response.headers);
         headers.set("step", "C");
         if (response.headers.get("step") === "D") {
-          return new Response(response.body, { ...response, headers });
+          return new Response(response.body, { headers });
         }
       },
     },
@@ -230,7 +229,7 @@ test("executes error handlers in expected order", async () => {
   const actualError = new Error();
   const modifiedError = new Error();
   const customResponse = Response.json({});
-  const client = createObservedClient<paths>({}, async (req) => {
+  const client = createObservedClient<paths>({}, async () => {
     throw actualError;
   });
   client.use({
@@ -338,7 +337,7 @@ test("can be ejected", async () => {
     },
   };
 
-  const client = createObservedClient<paths>({}, async (req) => Response.json({ id: 123 }));
+  const client = createObservedClient<paths>({}, async () => Response.json({ id: 123 }));
   client.use(errorMiddleware);
   client.eject(errorMiddleware);
 

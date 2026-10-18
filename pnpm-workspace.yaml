@@ -5,7 +5,9 @@ packages:
 catalog:
   execa: ^9.6.1
   typescript: ^5.9.3
-  vite: ^7.3.1
+  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  vitest: 5.0.5
+  vite-plus: 1.3.0
 
 ignoredBuiltDependencies:
   - '@swc/core'
@@ -14,5 +16,13 @@ ignoredBuiltDependencies:
   - sharp
   - svelte-preprocess
 
-onlyBuiltDependencies:
-  - '@biomejs/biome'
+overrides:
+  vite@*: 'catalog:'
+  vitest@*: 'catalog:'
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: '*'
+    vitest: '*'

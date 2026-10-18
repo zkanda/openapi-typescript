@@ -27,13 +27,12 @@
     "url": "https://github.com/openapi-ts/openapi-typescript/issues"
   },
   "scripts": {
-    "build": "unbuild",
-    "format": "biome format src --write",
-    "lint": "pnpm run lint:js && pnpm run lint:ts",
-    "lint:js": "biome check src",
-    "lint:ts": "tsc --noEmit"
+    "build": "vp pack",
+    "format": "vp fmt",
+    "lint": "vp check"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite-plus": "catalog:"
   }
 }

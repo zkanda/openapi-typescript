@@ -1,5 +1,4 @@
-import ts from "typescript";
-import { addJSDocComment, NEVER, oapiRef, QUESTION_TOKEN, tsModifiers, tsPropertyIndex } from "../lib/ts.js";
+import { addJSDocComment, type Member, NEVER, oapiRef, type TypeNode, tsPropertyIndex } from "../lib/ts.js";
 import { createRef } from "../lib/utils.js";
 import type {
   OperationObject,
@@ -17,11 +16,11 @@ export type Method = "get" | "put" | "post" | "delete" | "options" | "head" | "p
  * Transform PathItem nodes (4.8.9)
  * @see https://spec.openapis.org/oas/v3.1.0#path-item-object
  */
-export default function transformPathItemObject(pathItem: PathItemObject, options: TransformNodeOptions): ts.TypeNode {
-  const type: ts.TypeElement[] = [];
+export default function transformPathItemObject(pathItem: PathItemObject, options: TransformNodeOptions): TypeNode {
+  const members: Member[] = [];
 
   // parameters
-  type.push(
+  members.push(
     ...transformParametersArray(pathItem.parameters ?? [], {
       ...options,
       path: createRef([options.path, "parameters"]),
@@ -37,14 +36,7 @@ export default function transformPathItemObject(pathItem: PathItemObject, option
         ("$ref" in operationObject ? options.ctx.resolve<OperationObject>(operationObject.$ref) : operationObject)
           ?.deprecated)
     ) {
-      type.push(
-        ts.factory.createPropertySignature(
-          /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-          /* name          */ tsPropertyIndex(method),
-          /* questionToken */ QUESTION_TOKEN,
-          /* type          */ NEVER,
-        ),
-      );
+      members.push({ name: method, optional: true, type: NEVER });
       continue;
     }
 
@@ -64,7 +56,7 @@ export default function transformPathItemObject(pathItem: PathItemObject, option
       }
     }
 
-    let operationType: ts.TypeNode;
+    let operationType: TypeNode;
     if ("$ref" in operationObject) {
       operationType = oapiRef(operationObject.$ref);
     }
@@ -79,24 +71,20 @@ export default function transformPathItemObject(pathItem: PathItemObject, option
         { ...options, path: createRef([options.path, method]) },
       );
     } else {
-      operationType = ts.factory.createTypeLiteralNode(
-        transformOperationObject(
+      operationType = {
+        kind: "object",
+        members: transformOperationObject(
           { ...operationObject, parameters: Object.values(keyedParameters) },
           { ...options, path: createRef([options.path, method]) },
         ),
-      );
+      };
     }
-    const property = ts.factory.createPropertySignature(
-      /* modifiers     */ tsModifiers({ readonly: options.ctx.immutable }),
-      /* name          */ tsPropertyIndex(method),
-      /* questionToken */ undefined,
-      /* type          */ operationType,
-    );
-    addJSDocComment(operationObject, property);
-    type.push(property);
+    const member: Member = { name: tsPropertyIndex(method), type: operationType };
+    addJSDocComment(operationObject, member);
+    members.push(member);
   }
 
-  return ts.factory.createTypeLiteralNode(type);
+  return { kind: "object", members };
 }
 
 const HASH_RE = /#/g;

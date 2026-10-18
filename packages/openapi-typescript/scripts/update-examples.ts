@@ -24,21 +24,12 @@ async function generateSchemas() {
 
       // addiitonal flag tests (only for GitHub API, arbitrarily-chosen so we don’t have too much noise)
       if (name === "github-api") {
-        args.push([`./examples/${name}${ext}`, "--immutable", "-o", `./examples/${name}-immutable.ts`]);
-        args.push([
-          `./examples/${name}${ext}`,
-          "--immutable",
-          "--export-type",
-          "-o",
-          `./examples/${name}-export-type-immutable.ts`,
-        ]);
         args.push([
           `./examples/${name}${ext}`,
           "--properties-required-by-default",
           "-o",
           `./examples/${name}-required.ts`,
         ]);
-        args.push([`./examples/${name}${ext}`, "--root-types", "-o", `./examples/${name}-root-types.ts`]);
       }
 
       await Promise.all(args.map((a) => execa("./bin/cli.js", a, { cwd })));
@@ -46,17 +37,17 @@ async function generateSchemas() {
       schemasDoneCount++;
       const timeMs = Math.round(performance.now() - start);
 
-      // biome-ignore lint/suspicious/noConsole: this is a script
+      // oxlint-disable-next-line no-console -- this is a script
       console.log(`✔︎ [${schemasDoneCount}/${schemaTotalCount}] Updated ${name} (${timeMs}ms)`);
     } catch (error) {
-      // biome-ignore lint/suspicious/noConsole: this is a script
+      // oxlint-disable-next-line no-console -- this is a script
       console.error(`✘ [${schemasDoneCount}/${schemaTotalCount}] Failed to update ${name}`, {
         error: error instanceof Error ? error.message : error,
       });
     }
   };
 
-  // biome-ignore lint/suspicious/noConsole: this is a script
+  // oxlint-disable-next-line no-console -- this is a script
   console.log("Updating examples...");
 
   await Promise.all([
@@ -70,9 +61,9 @@ async function generateSchemas() {
     }),
   ]);
 
-  // biome-ignore lint/suspicious/noConsole: this is a script
+  // oxlint-disable-next-line no-console -- this is a script
   console.log("Updating examples done.");
   process.exit(0); // helps process close in npm script
 }
 
-generateSchemas();
+await generateSchemas();

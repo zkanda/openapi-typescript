@@ -1,4 +1,4 @@
-import { assertType, describe, expect, expectTypeOf, test } from "vitest";
+import { assertType, describe, expect, expectTypeOf, test } from "vite-plus/test";
 import type { MethodResponse } from "../../src/index.js";
 import { createObservedClient } from "../helpers.js";
 import type { components, paths } from "./schemas/common.js";
@@ -127,9 +127,7 @@ describe("response", () => {
 
   describe("response object", () => {
     test.each([200, 404, 500] as const)("%s", async (status) => {
-      const client = createObservedClient<paths>({}, async (req) =>
-        Response.json({ status, message: "OK" }, { status }),
-      );
+      const client = createObservedClient<paths>({}, async () => Response.json({ status, message: "OK" }, { status }));
       const result = await client.GET(status === 200 ? "/resources" : `/error-${status}`);
       expect(result.response.status).toBe(status);
     });

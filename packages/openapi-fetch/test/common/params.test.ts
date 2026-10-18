@@ -1,4 +1,4 @@
-import { assertType, describe, expect, test } from "vitest";
+import { assertType, describe, expect, test } from "vite-plus/test";
 import type { QuerySerializerOptions } from "../../src/index.js";
 import { createObservedClient } from "../helpers.js";
 import type { components, paths } from "./schemas/common.js";
@@ -201,7 +201,7 @@ describe("params", () => {
               // Custom serializer that wraps path values in brackets
               let result = pathname;
               for (const [key, value] of Object.entries(pathParams)) {
-                result = result.replace(`{${key}}`, `[${value}]`);
+                result = result.replace(`{${key}}`, `[${String(value)}]`);
               }
               return result;
             },
@@ -229,7 +229,7 @@ describe("params", () => {
               // Default global serializer (should be overridden)
               let result = pathname;
               for (const [key, value] of Object.entries(pathParams)) {
-                result = result.replace(`{${key}}`, `global-${value}`);
+                result = result.replace(`{${key}}`, `global-${String(value)}`);
               }
               return result;
             },
@@ -248,7 +248,7 @@ describe("params", () => {
             // Per-request serializer should override global
             let result = pathname;
             for (const [key, value] of Object.entries(pathParams)) {
-              result = result.replace(`{${key}}`, `request-${value}`);
+              result = result.replace(`{${key}}`, `request-${String(value)}`);
             }
             return result;
           },
@@ -268,7 +268,7 @@ describe("params", () => {
                 if (typeof value === "string") {
                   result = result.replace(`{${key}}`, `custom:${value}`);
                 } else {
-                  result = result.replace(`{${key}}`, `other:${value}`);
+                  result = result.replace(`{${key}}`, `other:${String(value)}`);
                 }
               }
               return result;
@@ -573,7 +573,7 @@ describe("params", () => {
           let actualURL = new URL("https://fakeurl.example");
           const client = createObservedClient<paths>(
             {
-              querySerializer: (q) => `alpha=${q.version}&beta=${q.format}`,
+              querySerializer: (q) => `alpha=${String(q.version)}&beta=${String(q.format)}`,
             },
             async (req) => {
               actualURL = new URL(req.url);
@@ -608,7 +608,7 @@ describe("params", () => {
               path: { id: 456 },
               query: { version: 2, format: "json" },
             },
-            querySerializer: (q) => `alpha=${q.version}&beta=${q.format}`,
+            querySerializer: (q) => `alpha=${String(q.version)}&beta=${String(q.format)}`,
           });
 
           expect(`${actualURL.pathname}${actualURL.search}`).toBe("/resources/456?alpha=2&beta=json");

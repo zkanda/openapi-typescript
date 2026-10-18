@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vite-plus/test";
 import createClient, { type BodySerializer, type FetchOptions } from "../../src/index.js";
 import { createObservedClient, headersToObj } from "../helpers.js";
 import type { components, paths } from "./schemas/common.js";
@@ -339,7 +339,7 @@ describe("request", () => {
   test("can attach custom properties to request", async () => {
     function createCustomFetch(data: any) {
       const response = {
-        clone: () => ({ ...response }),
+        clone: () => Object.assign({}, response),
         headers: new Headers(),
         json: async () => data,
         text: async () => JSON.stringify(data),
@@ -354,7 +354,7 @@ describe("request", () => {
 
     const customFetch = createCustomFetch({});
     const client = createClient<paths>({ baseUrl: "https://fakeurl.example", fetch: customFetch });
-    client.GET("/resources", {
+    await client.GET("/resources", {
       customProperty: "value",
     });
   });

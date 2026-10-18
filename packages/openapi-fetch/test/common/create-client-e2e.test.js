@@ -3,17 +3,15 @@ import * as https from "node:https";
 import express from "express";
 import * as forge from "node-forge";
 import { Agent } from "undici";
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import createClient from "../../src/index.js";
 
 const pki = forge.pki;
 
 const genCACert = async (opts = {}) => {
   const options = {
-    ...{
-      commonName: "Testing CA - DO NOT TRUST",
-      bits: 2048,
-    },
+    commonName: "Testing CA - DO NOT TRUST",
+    bits: 2048,
     ...opts,
   };
 

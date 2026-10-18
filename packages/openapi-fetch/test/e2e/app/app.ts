@@ -41,7 +41,7 @@ async function testMultiForm() {
 }
 
 // run all tests immediately on load
-(async () => {
+void (async () => {
   await Promise.all([testGet(), testPost(), testMultiForm()]);
 
   // add element Playwright is waiting for

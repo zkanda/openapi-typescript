@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = Number.parseInt(process.env.PORT || 4173 || "", 10);
+const PORT = Number.parseInt(process.env.PORT || "4173", 10);
 
 export default defineConfig({
   testMatch: "test/**/*.e2e.ts",

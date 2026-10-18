@@ -3,31 +3,48 @@ title: Migration Guide
 description: Migrating between openapi-typescript versions
 ---
 
+# Migrating to the TypeScript 7–compatible release
+
+openapi-typescript no longer depends on the `typescript` package (or on `@redocly/openapi-core`). It now ships its own small loader and bundler, so the generator runs regardless of which TypeScript version is installed in your project, including TypeScript 7. For the options that remain, the generated output is identical to before.
+
+### `openapiTS()` returns a string
+
+The Node.js API now returns the generated types as a `string` rather than a TypeScript AST, so there’s no need for `astToString()` anymore:
+
+```ts
+import fs from "node:fs";
+import openapiTS, { COMMENT_HEADER } from "openapi-typescript";
+
+const output = await openapiTS(new URL("./my-schema.yaml", import.meta.url));
+fs.writeFileSync("./my-schema.d.ts", COMMENT_HEADER + output);
+```
+
+`astToString()` is still exported, but it only prints the package’s own minimal AST.
+
+### Removed
+
+- `typescript` is no longer a peer dependency.
+- CLI flags: `--enum`, `--enum-values`, `--conditional-enums`, `--dedupe-enums`, `--export-type` (`-t`), `--immutable`, `--array-length`, `--path-params-as-types`, `--alphabetize`, `--root-types`, `--root-types-no-schema-prefix`, `--root-types-keep-casing`, `--make-paths-enum`, `--generate-path-params`, and `--read-write-markers` (the generator no longer emits `$Read`/`$Write` markers).
+- Node.js API options: `inject`, `transform`, `postTransform`, and `transformProperty`.
+- Redocly config support: `--redocly` (`-c`), `redocly.yaml` `apis` / `x-openapi-ts` settings, and multiple-schema config. To generate types for multiple schemas, [run the CLI once per schema](./cli#multiple-schemas).
+- Redocly lint rules: linting now only reports unresolved `$ref`s and duplicate `operationId`s (as errors). No other lint rules run.
+- The `openapi-react-query`, `swr-openapi`, and `openapi-metadata` packages.
+
 # Migrating to 7.x
 
 The 7.x release only has a few minor breaking changes to be aware of:
 
 ### Authentication / remote schema fetching
 
-In 7.x, all remote schema fetching is handled via the [Redocly CLI](https://redocly.com/docs/developer-portal/guides/reference-docs-integration-advanced/#authentication). This means you’ll need to [move your authentication settings](https://redocly.com/docs/developer-portal/guides/reference-docs-integration-advanced/#authentication) to a `redocly.config.yml` config file ([docs](https://redocly.com/docs/developer-portal/guides/reference-docs-integration-advanced/#authentication)).
-
-### TypeScript AST
-
-7.x introduces the TypeScript AST rather than simple string transformations. This applies to the core Node.js API, which now returns a TypeScript AST, as well as the options `transform()` and `postTransform()`. [The Node.js API docs have been updated with relevant examples to help](./node).
+Remote schemas are fetched without any custom headers or credentials. For non-public schemas, download the schema first and pass the local file (or stdin) to the CLI ([docs](./cli#auth)).
 
 ### defaultNonNullable: true by default
 
 The CLI and Node.js API now have `--default-non-nullable` behavior enabled by default. This means if a schema object has a `default` value, it will be treated as if it’s `required` (with the exception of parameters).
 
-### Globbing replaced with Redocly config
+### Globbing removed
 
-7.x can still generate multiple schemas at once, but rather than globbing that forces you to follow a particular naming schema, you’ll declare a `redocly.config.yaml` file that lists every input schema and where its associated generated types should go. This allows more flexibility in naming and organizing multiple schemas.
-
-But the neat part is with a `redocly.config.yml` file declared, you can simply run the CLI command with no arguments ([docs](./cli#redoc-config)):
-
-```sh
-npx openapi-typescript
-```
+Globbing is no longer supported. To generate types for multiple schemas, run the CLI once per schema ([docs](./cli#multiple-schemas)).
 
 ### Node.js API input types
 

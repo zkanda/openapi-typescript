@@ -7,13 +7,10 @@ openapi-fetch is a type-safe fetch client that pulls in your OpenAPI schema. Wei
 | openapi-fetch              |     `6 kB` | `300k` ops/s (fastest)     |
 | openapi-typescript-fetch   |     `3 kB` | `300k` ops/s (fastest)     |
 | feature-fetch              |    `15 kB` | `300k` ops/s (fastest)     |
-| axios                      |    `32 kB` | `225k` ops/s (1.3× slower) |
-| superagent                 |    `55 kB` | `50k` ops/s (6× slower)    |
-| openapi-typescript-codegen |   `367 kB` | `100k` ops/s (3× slower)   |
 
-_\* [Benchmarks are approximate](https://github.com/openapi-ts/openapi-typescript/blob/main/packages/openapi-fetch/test/index.bench.js) to just show rough baseline and will differ among machines and browsers. The relative performance between libraries is more reliable._
+_\* [Benchmarks are approximate](https://github.com/openapi-ts/openapi-typescript/blob/main/packages/openapi-fetch/test/bench/index.bench.js) to just show rough baseline and will differ among machines and browsers. The relative performance between libraries is more reliable._
 
-The syntax is inspired by popular libraries like react-query or Apollo client, but without all the bells and whistles and in a 6 kb package.
+The syntax is inspired by popular libraries like TanStack Query or Apollo client, but without all the bells and whistles and in a 6 kb package.
 
 ```ts
 import createClient from "openapi-fetch";

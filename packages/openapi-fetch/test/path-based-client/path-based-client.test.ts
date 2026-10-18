@@ -1,5 +1,5 @@
 import type { MediaType } from "openapi-typescript-helpers";
-import { describe, expect, expectTypeOf, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vite-plus/test";
 import { createPathBasedClient, type PathBasedClient } from "../../src/index.js";
 import type { paths } from "./schemas/path-based-client.js";
 
@@ -73,7 +73,7 @@ describe("createPathBasedClient", () => {
         expect(error).toBeUndefined();
       } else {
         // @ts-expect-error
-        data.not_a_blogpost_property;
+        void data.not_a_blogpost_property;
         // Check typing of result value.
         expect(data.title).toBe("Blog post title");
       }

@@ -1,27 +1,22 @@
-import { parseRef } from "@redocly/openapi-core/lib/ref-utils.js";
-import ts from "typescript";
 import {
   addJSDocComment,
   BOOLEAN,
+  type Member,
   NEVER,
   NULL,
   NUMBER,
   oapiRef,
-  QUESTION_TOKEN,
   STRING,
-  tsArrayLiteralExpression,
-  tsEnum,
+  type TypeNode,
   tsIntersection,
   tsIsPrimitive,
   tsLiteral,
-  tsModifiers,
   tsNullable,
   tsOmit,
   tsPropertyIndex,
   tsRecord,
   tsUnion,
   tsWithRequired,
-  UNDEFINED,
   UNKNOWN,
 } from "../lib/ts.js";
 import { createDiscriminatorProperty, createRef, getEntries } from "../lib/utils.js";
@@ -34,26 +29,7 @@ import type { ReferenceObject, SchemaObject, TransformNodeOptions } from "../typ
 export default function transformSchemaObject(
   schemaObject: SchemaObject | ReferenceObject,
   options: TransformNodeOptions,
-  fromAdditionalProperties = false,
-): ts.TypeNode {
-  const type = transformSchemaObjectWithComposition(schemaObject, options, fromAdditionalProperties);
-  if (typeof options.ctx.postTransform === "function") {
-    const postTransformResult = options.ctx.postTransform(type, options);
-    if (postTransformResult) {
-      return postTransformResult;
-    }
-  }
-  return type;
-}
-
-/**
- * Transform SchemaObjects
- */
-export function transformSchemaObjectWithComposition(
-  schemaObject: SchemaObject | ReferenceObject,
-  options: TransformNodeOptions,
-  fromAdditionalProperties = false,
-): ts.TypeNode {
+): TypeNode {
   /**
    * Unexpected types & edge cases
    */
@@ -99,113 +75,12 @@ export function transformSchemaObjectWithComposition(
     const hasAdditionalProperties = "additionalProperties" in schemaObject && !!schemaObject.additionalProperties;
 
     if (!hasAdditionalProperties || (schemaObject.type === "string" && hasAdditionalProperties)) {
-      // hoist enum to top level if string/number enum and option is enabled
-      if (shouldTransformToTsEnum(options, schemaObject)) {
-        let enumName = parseRef(options.path ?? "").pointer.join("/");
-        // allow #/components/schemas to have simpler names
-        enumName = enumName.replace("components/schemas", "");
-        const metadata = schemaObject.enum.map((_, i) => ({
-          name: schemaObject["x-enum-varnames"]?.[i] ?? schemaObject["x-enumNames"]?.[i],
-          description: schemaObject["x-enum-descriptions"]?.[i] ?? schemaObject["x-enumDescriptions"]?.[i],
-        }));
-
-        // enums can contain null values, but dont want to output them
-        let hasNull = false;
-        const validSchemaEnums = schemaObject.enum.filter((enumValue) => {
-          if (enumValue === null) {
-            hasNull = true;
-            return false;
-          }
-
-          return true;
-        });
-        const enumType = tsEnum(enumName, validSchemaEnums as (string | number)[], metadata, {
-          shouldCache: options.ctx.dedupeEnums,
-          export: true,
-          // readonly: TS enum do not support the readonly modifier
-        });
-        if (!options.ctx.injectFooter.includes(enumType)) {
-          options.ctx.injectFooter.push(enumType);
-        }
-        const ref = ts.factory.createTypeReferenceNode(enumType.name);
-
-        const finalType: ts.TypeNode = hasNull ? tsUnion([ref, NULL]) : ref;
-
-        return applyAdditionalPropertiesToEnum(hasAdditionalProperties, finalType, schemaObject);
-      }
-
       const enumType = schemaObject.enum.map(tsLiteral);
       if ((Array.isArray(schemaObject.type) && schemaObject.type.includes("null")) || schemaObject.nullable) {
         enumType.push(NULL);
       }
 
-      const unionType = applyAdditionalPropertiesToEnum(hasAdditionalProperties, tsUnion(enumType), schemaObject);
-
-      // hoist array with valid enum values to top level if string/number enum and option is enabled
-      if (options.ctx.enumValues && schemaObject.enum.every((v) => typeof v === "string" || typeof v === "number")) {
-        const parsed = parseRef(options.path ?? "");
-        let enumValuesVariableName = parsed.pointer.join("/");
-        // allow #/components/schemas to have simpler names
-        enumValuesVariableName = enumValuesVariableName.replace("components/schemas", "");
-        enumValuesVariableName = `${enumValuesVariableName}Values`;
-
-        // build a ref path for the type that ignores union indices (anyOf/oneOf) so
-        // type references remain stable even when names include union positions
-        const cleanedPointer: string[] = [];
-        // Track ALL properties after a oneOf/anyOf that need Extract<> narrowing.
-        // We apply Extract<> before EVERY property access after a union index because:
-        // - When the property exists on ALL variants, Extract<> is a no-op (returns same type)
-        // - When the property only exists on SOME variants, it correctly narrows the union
-        // - When both variants have same property name but different inner schemas,
-        //   we still narrow at each level to handle nested unions correctly
-        // This robust approach handles both simple and complex union structures.
-        const extractProperties: string[] = [];
-        for (let i = 0; i < parsed.pointer.length; i++) {
-          // Example: #/paths/analytics/data/get/responses/400/content/application/json/anyOf/0/message
-          const segment = parsed.pointer[i];
-          if ((segment === "anyOf" || segment === "oneOf") && i < parsed.pointer.length - 1) {
-            const next = parsed.pointer[i + 1];
-            if (/^\d+$/.test(next)) {
-              // If we encounter something like "anyOf/0", we want to skip that part of the path
-              i++;
-              // Collect ALL remaining segments after the union index.
-              // Each one will be wrapped with Extract<> to safely narrow the type
-              // at each level, handling both top-level and nested union variants.
-              const remainingSegments = parsed.pointer.slice(i + 1);
-              for (const seg of remainingSegments) {
-                // Skip union keywords and indices, only add actual property names
-                if (seg !== "anyOf" && seg !== "oneOf" && !/^\d+$/.test(seg)) {
-                  extractProperties.push(seg);
-                }
-              }
-              continue;
-            }
-          }
-          cleanedPointer.push(segment);
-        }
-        const cleanedRefPath = createRef(cleanedPointer);
-
-        const enumValuesArray = tsArrayLiteralExpression(
-          enumValuesVariableName,
-          // If fromAdditionalProperties is true we are dealing with a record type and we should append [string] to the generated type
-          fromAdditionalProperties
-            ? ts.factory.createIndexedAccessTypeNode(
-                oapiRef(cleanedRefPath, undefined, { deep: true, extractProperties }),
-                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("string")),
-              )
-            : oapiRef(cleanedRefPath, undefined, { deep: true, extractProperties }),
-          schemaObject.enum as (string | number)[],
-          {
-            export: true,
-            readonly: true,
-            injectFooter: options.ctx.injectFooter,
-          },
-        );
-
-        options.ctx.injectFooter.push(enumValuesArray);
-      }
-
-      return unionType;
+      return applyAdditionalPropertiesToEnum(hasAdditionalProperties, tsUnion(enumType), schemaObject);
     }
   }
 
@@ -215,25 +90,16 @@ export function transformSchemaObjectWithComposition(
 
   /** Collect oneOf/anyOf */
   function collectUnionCompositions(items: (SchemaObject | ReferenceObject)[], unionKey: "anyOf" | "oneOf") {
-    const output: ts.TypeNode[] = [];
-    for (const [index, item] of items.entries()) {
-      output.push(
-        transformSchemaObject(item, {
-          ...options,
-          // include index in path so generated names from nested enums/enumValues are unique
-          path: createRef([options.path, unionKey, String(index)]),
-        }),
-      );
-    }
-
-    return output;
+    return items.map((item, index) =>
+      transformSchemaObject(item, { ...options, path: createRef([options.path, unionKey, String(index)]) }),
+    );
   }
 
   /** Collect allOf with Omit<> for discriminators */
-  function collectAllOfCompositions(items: (SchemaObject | ReferenceObject)[], required?: string[]): ts.TypeNode[] {
-    const output: ts.TypeNode[] = [];
+  function collectAllOfCompositions(items: (SchemaObject | ReferenceObject)[], required?: string[]): TypeNode[] {
+    const output: TypeNode[] = [];
     for (const item of items) {
-      let itemType: ts.TypeNode;
+      let itemType: TypeNode;
       // if this is a $ref, use WithRequired<X, Y> if parent specifies required properties
       // (but only for valid keys)
       if ("$ref" in item) {
@@ -277,13 +143,13 @@ export function transformSchemaObjectWithComposition(
   }
 
   // compile final type
-  let finalType: ts.TypeNode | undefined;
+  let finalType: TypeNode | undefined;
 
   // core + allOf: intersect
   const coreObjectType = transformSchemaObjectCore(schemaObject, options);
   const allOfType = collectAllOfCompositions(schemaObject.allOf ?? [], schemaObject.required);
   if (coreObjectType || allOfType.length) {
-    const allOf: ts.TypeNode | undefined = allOfType.length ? tsIntersection(allOfType) : undefined;
+    const allOf: TypeNode | undefined = allOfType.length ? tsIntersection(allOfType) : undefined;
     finalType = tsIntersection([...(coreObjectType ? [coreObjectType] : []), ...(allOf ? [allOf] : [])]);
   }
   // anyOf: union
@@ -327,54 +193,10 @@ export function transformSchemaObjectWithComposition(
 }
 
 /**
- * Check if the given OAPI enum should be transformed to a TypeScript enum
- */
-function shouldTransformToTsEnum(options: TransformNodeOptions, schemaObject: SchemaObject): boolean {
-  // Enum conversion not enabled or no enum present
-  if (!options.ctx.enum || !schemaObject.enum) {
-    return false;
-  }
-
-  // Enum must have string, number or null values
-  if (!schemaObject.enum.every((v) => ["string", "number", null].includes(typeof v))) {
-    return false;
-  }
-
-  // If conditionalEnums is enabled, only convert if x-enum-* metadata is present
-  if (options.ctx.conditionalEnums) {
-    const hasEnumMetadata =
-      Array.isArray(schemaObject["x-enum-varnames"]) ||
-      Array.isArray(schemaObject["x-enumNames"]) ||
-      Array.isArray(schemaObject["x-enum-descriptions"]) ||
-      Array.isArray(schemaObject["x-enumDescriptions"]);
-    if (!hasEnumMetadata) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
  * Handle SchemaObject minus composition (anyOf/allOf/oneOf)
  */
-function transformSchemaObjectCore(schemaObject: SchemaObject, options: TransformNodeOptions): ts.TypeNode | undefined {
+function transformSchemaObjectCore(schemaObject: SchemaObject, options: TransformNodeOptions): TypeNode | undefined {
   if ("type" in schemaObject && schemaObject.type) {
-    if (typeof options.ctx.transform === "function") {
-      const result = options.ctx.transform(schemaObject, options);
-      if (result && typeof result === "object") {
-        if ("schema" in result) {
-          if (result.questionToken) {
-            return ts.factory.createUnionTypeNode([result.schema, UNDEFINED]);
-          } else {
-            return result.schema;
-          }
-        } else {
-          return result;
-        }
-      }
-    }
-
     // primitives
     // type: null
     if (schemaObject.type === "null") {
@@ -396,77 +218,29 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
     // type: array (with support for tuples)
     if (schemaObject.type === "array") {
       // default to `unknown[]`
-      let itemType: ts.TypeNode = UNKNOWN;
+      let itemType: TypeNode = UNKNOWN;
       // tuple type
       if (schemaObject.prefixItems || Array.isArray(schemaObject.items)) {
         const prefixItems = schemaObject.prefixItems ?? (schemaObject.items as (SchemaObject | ReferenceObject)[]);
-        itemType = ts.factory.createTupleTypeNode(prefixItems.map((item) => transformSchemaObject(item, options)));
+        itemType = { kind: "tuple", elements: prefixItems.map((item) => transformSchemaObject(item, options)) };
       }
       // standard array type
       else if (schemaObject.items) {
         if (hasKey(schemaObject.items, "type") && schemaObject.items.type === "array") {
-          itemType = ts.factory.createArrayTypeNode(transformSchemaObject(schemaObject.items, options));
+          itemType = { kind: "array", element: transformSchemaObject(schemaObject.items, options) };
         } else {
           itemType = transformSchemaObject(schemaObject.items, options);
         }
       }
 
-      const min: number =
-        typeof schemaObject.minItems === "number" && schemaObject.minItems >= 0 ? schemaObject.minItems : 0;
-      const max: number | undefined =
-        typeof schemaObject.maxItems === "number" && schemaObject.maxItems >= 0 && min <= schemaObject.maxItems
-          ? schemaObject.maxItems
-          : undefined;
-      const estimateCodeSize = typeof max !== "number" ? min : (max * (max + 1) - min * (min - 1)) / 2;
-      if (
-        options.ctx.arrayLength &&
-        (min !== 0 || max !== undefined) &&
-        estimateCodeSize < 30 // "30" is an arbitrary number but roughly around when TS starts to struggle with tuple inference in practice
-      ) {
-        if (min === max) {
-          const elements: ts.TypeNode[] = [];
-          for (let i = 0; i < min; i++) {
-            elements.push(itemType);
-          }
-          return tsUnion([ts.factory.createTupleTypeNode(elements)]);
-        } else if ((schemaObject.maxItems as number) > 0) {
-          // if maxItems is set, then return a union of all permutations of possible tuple types
-          const members: ts.TypeNode[] = [];
-          // populate 1 short of min …
-          for (let i = 0; i <= (max ?? 0) - min; i++) {
-            const elements: ts.TypeNode[] = [];
-            for (let j = min; j < i + min; j++) {
-              elements.push(itemType);
-            }
-            members.push(ts.factory.createTupleTypeNode(elements));
-          }
-          return tsUnion(members);
-        }
-        // if maxItems not set, then return a simple tuple type the length of `min`
-        else {
-          const elements: ts.TypeNode[] = [];
-          for (let i = 0; i < min; i++) {
-            elements.push(itemType);
-          }
-          elements.push(ts.factory.createRestTypeNode(ts.factory.createArrayTypeNode(itemType)));
-          return ts.factory.createTupleTypeNode(elements);
-        }
-      }
-
-      const finalType =
-        ts.isTupleTypeNode(itemType) || ts.isArrayTypeNode(itemType)
-          ? itemType
-          : ts.factory.createArrayTypeNode(itemType); // wrap itemType in array type, but only if not a tuple or array already
-
-      return options.ctx.immutable
-        ? ts.factory.createTypeOperatorNode(ts.SyntaxKind.ReadonlyKeyword, finalType)
-        : finalType;
+      // wrap itemType in array type, but only if not a tuple or array already
+      return itemType.kind === "tuple" || itemType.kind === "array" ? itemType : { kind: "array", element: itemType };
     }
 
     // polymorphic, or 3.1 nullable
     if (Array.isArray(schemaObject.type) && !Array.isArray(schemaObject)) {
       // skip any primitive types that appear in oneOf as well
-      const uniqueTypes: ts.TypeNode[] = [];
+      const uniqueTypes: TypeNode[] = [];
       if (Array.isArray(schemaObject.oneOf)) {
         for (const t of schemaObject.type) {
           if (
@@ -498,7 +272,7 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
   }
 
   // type: object
-  const coreObjectType: ts.TypeElement[] = [];
+  const coreObjectType: Member[] = [];
 
   // discriminators: explicit mapping on schema object
   for (const k of ["allOf", "anyOf"] as const) {
@@ -515,12 +289,7 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
       !options.ctx.discriminators.refsHandled.includes(options.path ?? "") &&
       options.ctx.discriminators.objects[options.path ?? ""];
     if (discriminator) {
-      coreObjectType.unshift(
-        createDiscriminatorProperty(discriminator, {
-          path: options.path ?? "",
-          readonly: options.ctx.immutable,
-        }),
-      );
+      coreObjectType.unshift(createDiscriminatorProperty(discriminator, { path: options.path ?? "" }));
       break;
     }
   }
@@ -542,12 +311,11 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
           );
         }
 
-        const { $ref, readOnly, writeOnly, hasDefault } =
+        const { $ref, readOnly, hasDefault } =
           typeof v === "object"
             ? {
                 $ref: "$ref" in v && v.$ref,
                 readOnly: "readOnly" in v && v.readOnly,
-                writeOnly: "writeOnly" in v && v.writeOnly,
                 hasDefault: "default" in v && v.default !== undefined,
               }
             : {};
@@ -559,7 +327,7 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
             continue;
           }
         }
-        let optional =
+        const optional = !(
           schemaObject.required?.includes(k) ||
           (schemaObject.required === undefined && options.ctx.propertiesRequiredByDefault) ||
           (hasDefault &&
@@ -567,98 +335,36 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
             !options.path?.includes("parameters") &&
             !options.path?.includes("requestBody") &&
             !options.path?.includes("requestBodies")) // can’t be required, even with defaults
-            ? undefined
-            : QUESTION_TOKEN;
-        let type = $ref
-          ? oapiRef($ref)
-          : transformSchemaObject(v, {
-              ...options,
-              path: createRef([options.path, k]),
-            });
-
-        if (typeof options.ctx.transform === "function") {
-          const result = options.ctx.transform(v as SchemaObject, options);
-          if (result && typeof result === "object") {
-            if ("schema" in result) {
-              type = result.schema;
-              optional = result.questionToken ? QUESTION_TOKEN : optional;
-            } else {
-              type = result;
-            }
-          }
-        }
-
-        type = wrapWithReadWriteMarker(type, !!readOnly, !!writeOnly, options.ctx);
-
-        let property = ts.factory.createPropertySignature(
-          /* modifiers     */ tsModifiers({
-            readonly: options.ctx.immutable || (!options.ctx.readWriteMarkers && readOnly),
-          }),
-          /* name          */ tsPropertyIndex(k),
-          /* questionToken */ optional,
-          /* type          */ type,
         );
-
-        // Apply transformProperty hook if available
-        if (typeof options.ctx.transformProperty === "function") {
-          const result = options.ctx.transformProperty(property, v as SchemaObject, {
-            ...options,
-            path: createRef([options.path, k]),
-          });
-          if (result) {
-            property = result;
-          }
-        }
-
-        addJSDocComment(v, property);
-        coreObjectType.push(property);
+        const member: Member = {
+          name: tsPropertyIndex(k),
+          readonly: !!readOnly,
+          optional,
+          type: $ref
+            ? oapiRef($ref)
+            : transformSchemaObject(v, {
+                ...options,
+                path: createRef([options.path, k]),
+              }),
+        };
+        addJSDocComment(v, member);
+        coreObjectType.push(member);
       }
     }
 
     // $defs
     if ("$defs" in schemaObject && typeof schemaObject.$defs === "object" && Object.keys(schemaObject.$defs).length) {
-      const defKeys: ts.TypeElement[] = [];
+      const defKeys: Member[] = [];
       for (const [k, v] of Object.entries(schemaObject.$defs)) {
-        const defReadOnly = "readOnly" in v && !!v.readOnly;
-        const defWriteOnly = "writeOnly" in v && !!v.writeOnly;
-        const defType = wrapWithReadWriteMarker(
-          transformSchemaObject(v, { ...options, path: createRef([options.path, "$defs", k]) }),
-          defReadOnly,
-          defWriteOnly,
-          options.ctx,
-        );
-
-        let property = ts.factory.createPropertySignature(
-          /* modifiers    */ tsModifiers({
-            readonly: options.ctx.immutable || (!options.ctx.readWriteMarkers && defReadOnly),
-          }),
-          /* name          */ tsPropertyIndex(k),
-          /* questionToken */ undefined,
-          /* type          */ defType,
-        );
-
-        // Apply transformProperty hook if available
-        if (typeof options.ctx.transformProperty === "function") {
-          const result = options.ctx.transformProperty(property, v as SchemaObject, {
-            ...options,
-            path: createRef([options.path, "$defs", k]),
-          });
-          if (result) {
-            property = result;
-          }
-        }
-
-        addJSDocComment(v, property);
-        defKeys.push(property);
+        const member: Member = {
+          name: tsPropertyIndex(k),
+          readonly: "readOnly" in v && !!v.readOnly,
+          type: transformSchemaObject(v, { ...options, path: createRef([options.path, "$defs", k]) }),
+        };
+        addJSDocComment(v, member);
+        defKeys.push(member);
       }
-      coreObjectType.push(
-        ts.factory.createPropertySignature(
-          /* modifiers     */ undefined,
-          /* name          */ tsPropertyIndex("$defs"),
-          /* questionToken */ undefined,
-          /* type          */ ts.factory.createTypeLiteralNode(defKeys),
-        ),
-      );
+      coreObjectType.push({ name: "$defs", type: { kind: "object", members: defKeys } });
     }
 
     // additionalProperties / patternProperties
@@ -673,7 +379,7 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
       typeof patternProperties === "object" && patternProperties !== null && Object.keys(patternProperties).length > 0;
     const stringIndexTypes = [];
     if (hasExplicitAdditionalProperties) {
-      stringIndexTypes.push(transformSchemaObject(schemaObject.additionalProperties as SchemaObject, options, true));
+      stringIndexTypes.push(transformSchemaObject(schemaObject.additionalProperties as SchemaObject, options));
     }
     if (hasImplicitAdditionalProperties || (!schemaObject.additionalProperties && options.ctx.additionalProperties)) {
       stringIndexTypes.push(UNKNOWN);
@@ -688,34 +394,18 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
     }
 
     if (stringIndexTypes.length === 0) {
-      return coreObjectType.length ? ts.factory.createTypeLiteralNode(coreObjectType) : undefined;
+      return coreObjectType.length ? { kind: "object", members: coreObjectType } : undefined;
     }
 
     const stringIndexType = tsUnion(stringIndexTypes);
 
     return tsIntersection([
-      ...(coreObjectType.length ? [ts.factory.createTypeLiteralNode(coreObjectType)] : []),
-      ts.factory.createTypeLiteralNode([
-        ts.factory.createIndexSignature(
-          /* modifiers  */ tsModifiers({
-            readonly: options.ctx.immutable,
-          }),
-          /* parameters */ [
-            ts.factory.createParameterDeclaration(
-              /* modifiers      */ undefined,
-              /* dotDotDotToken */ undefined,
-              /* name           */ ts.factory.createIdentifier("key"),
-              /* questionToken  */ undefined,
-              /* type           */ STRING,
-            ),
-          ],
-          /* type       */ stringIndexType,
-        ),
-      ]),
+      ...(coreObjectType.length ? [{ kind: "object", members: coreObjectType } as TypeNode] : []),
+      { kind: "object", members: [{ name: "", indexSignature: "key", type: stringIndexType }] },
     ]);
   }
 
-  return coreObjectType.length ? ts.factory.createTypeLiteralNode(coreObjectType) : undefined;
+  return coreObjectType.length ? { kind: "object", members: coreObjectType } : undefined;
 }
 
 /**
@@ -730,32 +420,13 @@ function hasKey<K extends string>(possibleObject: unknown, key: K): possibleObje
 
 function applyAdditionalPropertiesToEnum(
   hasAdditionalProperties: boolean,
-  unionType: ts.TypeNode,
+  unionType: TypeNode,
   schemaObject: SchemaObject,
 ) {
   // If additionalProperties is true, add (string & {}) to the union
   if (hasAdditionalProperties && schemaObject.type === "string") {
-    const stringAndEmptyObject = tsIntersection([STRING, ts.factory.createTypeLiteralNode([])]);
+    const stringAndEmptyObject = tsIntersection([STRING, { kind: "object", members: [] }]);
     return tsUnion([unionType, stringAndEmptyObject]);
   }
   return unionType;
-}
-
-/** Wrap type with $Read or $Write marker when readWriteMarkers flag is enabled */
-function wrapWithReadWriteMarker(
-  type: ts.TypeNode,
-  readOnly: boolean,
-  writeOnly: boolean,
-  ctx: { readWriteMarkers: boolean },
-): ts.TypeNode {
-  if (!ctx.readWriteMarkers || (readOnly && writeOnly)) {
-    return type;
-  }
-  if (readOnly) {
-    return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("$Read"), [type]);
-  }
-  if (writeOnly) {
-    return ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("$Write"), [type]);
-  }
-  return type;
 }

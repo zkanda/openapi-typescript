@@ -12,7 +12,7 @@ const EXAMPLES_DIR = new URL("../examples/", import.meta.url);
 export async function download() {
   const allSchemas = Object.keys({ ...singleFile, ...multiFile });
   let done = 0;
-  // biome-ignore lint/suspicious/noConsole: this is a script
+  // oxlint-disable-next-line no-console -- this is a script
   console.log("Downloading schemas...");
   await Promise.all([
     ...Object.entries(singleFile).map(async ([k, url]) => {
@@ -33,7 +33,7 @@ export async function download() {
       fs.mkdirSync(new URL(".", dest), { recursive: true });
       fs.writeFileSync(dest, await result.text());
       done++;
-      // biome-ignore lint/suspicious/noConsole: this is a script
+      // oxlint-disable-next-line no-console -- this is a script
       console.log(`✔︎ [${done}/${allSchemas.length}] Downloaded ${k} (${Math.round(performance.now() - start)}ms)`);
     }),
     ...Object.entries(multiFile).map(async ([k, meta]) => {
@@ -50,13 +50,13 @@ export async function download() {
       });
       await emitter.clone(fileURLToPath(new URL(k, EXAMPLES_DIR)));
       done++;
-      // biome-ignore lint/suspicious/noConsole: this is a script
+      // oxlint-disable-next-line no-console -- this is a script
       console.log(`✔︎ [${done}/${allSchemas.length}] Downloaded ${k} (${Math.round(performance.now() - start)}ms)`);
     }),
   ]);
-  // biome-ignore lint/suspicious/noConsole: this is a script
+  // oxlint-disable-next-line no-console -- this is a script
   console.log("Downloading schemas done.");
   process.exit(0); // helps process close in npm script
 }
 
-download();
+await download();
