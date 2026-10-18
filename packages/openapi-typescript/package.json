@@ -21,6 +21,9 @@
     "./*.js": "./*.mjs",
     "./*": "./*"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "homepage": "https://github.com/zkanda/openapi-typescript/tree/main/packages/openapi-typescript#readme",
   "repository": {
     "type": "git",
