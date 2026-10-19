@@ -16,13 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: latest
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
-      - run: pnpm run lint
+          cache: true
+      - run: vp run lint
   test-node-versions:
     runs-on: ubuntu-latest
     strategy:
@@ -30,44 +28,36 @@ jobs:
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
-      - run: pnpm test
+          cache: true
+      - run: vp run test
   test-e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: latest
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
-      - run: pnpm exec playwright install --with-deps
-      - run: pnpm run test-e2e
+          cache: true
+      - run: vp exec playwright install --with-deps
+      - run: vp run test-e2e
   test-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: latest
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
-      - run: pnpm test
+          cache: true
+      - run: vp run test
   test-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: latest
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
-      - run: pnpm test
+          cache: true
+      - run: vp run test

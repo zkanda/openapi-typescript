@@ -44,16 +44,16 @@
     "format": "vp fmt",
     "lint": "vp check",
     "generate-types": "node test/generate-types.js",
-    "prepack": "pnpm run build",
-    "pretest": "pnpm run generate-types",
-    "test": "pnpm run test:js && pnpm run test:exports",
+    "prepack": "vp run build",
+    "pretest": "vp run generate-types",
+    "test": "vp run test:js && vp run test:exports",
     "test:js": "vp test run",
-    "test:exports": "pnpm run build && attw --pack .",
+    "test:exports": "vp run build && attw --pack .",
     "test-e2e": "playwright test",
     "bench:js": "vp test bench",
     "e2e-vite-build": "vp build test/e2e/app",
     "e2e-vite-start": "vp preview test/e2e/app",
-    "version": "pnpm run prepare && pnpm run build"
+    "version": "vp run prepare && vp run build"
   },
   "dependencies": {
     "@zkanda/openapi-typescript-helpers": "workspace:^"

@@ -50,14 +50,14 @@
     "download:schemas": "vite-node ./scripts/download-schemas.ts",
     "format": "vp fmt",
     "lint": "vp check",
-    "prepack": "pnpm run build",
-    "test": "pnpm run test:js && pnpm run test:examples && pnpm run test:exports",
+    "prepack": "vp run build",
+    "test": "vp run test:js && vp run test:examples && vp run test:exports",
     "test:js": "vp test run",
-    "test:exports": "pnpm run build && attw --pack .",
+    "test:exports": "vp run build && attw --pack .",
     "test:examples": "tsc -p tsconfig.examples.json --noEmit",
-    "update:examples": "pnpm run build && pnpm run download:schemas && vite-node ./scripts/update-examples.ts",
-    "prepublish": "pnpm run build",
-    "version": "pnpm run build"
+    "update:examples": "vp run build && vp run download:schemas && vite-node ./scripts/update-examples.ts",
+    "prepublish": "vp run build",
+    "version": "vp run build"
   },
   "dependencies": {
     "ansi-colors": "^4.1.3",
