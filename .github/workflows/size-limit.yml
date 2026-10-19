@@ -21,3 +21,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           package_manager: pnpm
+          # default `npx size-limit` fails under Vite+'s npx shim
+          script: vp exec size-limit --json
