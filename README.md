@@ -16,6 +16,10 @@ Ultra-fast fetching for TypeScript generated automatically from your OpenAPI sch
 TypeScript helpers for consuming openapi-typescript types
 </a>
 
+## 🤖 How this fork is built
+
+Most code in this fork is written with AI assistance, guided and reviewed thoroughly by [@zkanda](https://github.com/zkanda) before merging.
+
 ## 🤝 Contributing
 
 Contributions are appreciated and welcome! See the appropriate guide for each package:
