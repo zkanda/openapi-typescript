@@ -17,19 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      # Node 24 (.node-version) bundles npm >= 11.5.1, required for trusted publishing
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          node-version: 24
-      # trusted publishing requires npm >= 11.5.1
-      - run: npm install -g npm@latest
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
-      - run: pnpm run build
+          node-version-file: .node-version
+          cache: true
+      - run: vp run build
       - uses: changesets/action@v1
         with:
-          version: pnpm run version
-          publish: pnpm changeset publish
+          version: vp run version
+          publish: vp exec changeset publish
           title: "Version Packages"
           commit: "Version Packages"
         env:

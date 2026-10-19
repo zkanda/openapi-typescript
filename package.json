@@ -16,7 +16,7 @@
     "test": "vp run --filter \"./packages/*\" build && vp run --filter \"./packages/*\" test",
     "test-e2e": "vp run --filter \"./packages/*\" build && vp run --filter \"./packages/*\" test-e2e",
     "size": "size-limit",
-    "version": "pnpm run build && changeset version && pnpm i"
+    "version": "vp run build && changeset version && vp install --no-frozen-lockfile"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
