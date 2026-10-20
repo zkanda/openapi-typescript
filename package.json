@@ -16,7 +16,8 @@
     "test": "vp run --filter \"./packages/*\" build && vp run --filter \"./packages/*\" test",
     "test-e2e": "vp run --filter \"./packages/*\" build && vp run --filter \"./packages/*\" test-e2e",
     "size": "size-limit",
-    "version": "vp run build && changeset version && vp install --no-frozen-lockfile"
+    "version": "vp run build && changeset version && vp install --no-frozen-lockfile",
+    "stage-publish": "node scripts/stage-publish.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

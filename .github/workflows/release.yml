@@ -17,17 +17,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      # Node 24 (.node-version) bundles npm >= 11.5.1, required for trusted publishing
+        with:
+          fetch-depth: 2 # stage-publish compares versions against HEAD^
+      # Node 24 (.node-version) bundles npm >= 11.15, required for `npm stage publish`
       - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version-file: .node-version
           cache: true
       - run: vp run build
-      - uses: changesets/action@v1
+      # With changesets: open/update the "Version Packages" PR
+      - id: changesets
+        uses: changesets/action@v1
         with:
           version: vp run version
-          publish: vp exec changeset publish
           title: "Version Packages"
           commit: "Version Packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Without changesets: stage new versions on npm; approve each on npmjs.com (2FA)
+      - if: steps.changesets.outputs.hasChangesets == 'false'
+        run: vp run stage-publish
