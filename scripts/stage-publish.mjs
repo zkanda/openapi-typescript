@@ -1,7 +1,7 @@
 // Stages each public package whose version changed in the last commit and isn't on npm yet.
 // A maintainer then approves each staged version on npmjs.com (2FA).
 //
-// Uses `npm stage publish` directly: `vp pm stage` needs pnpm >= 11.3.
+// Uses `npm stage publish` directly: npm documents trusted publishing (OIDC) for it; pnpm doesn't.
 // Packs with `vp pm pack` first so `workspace:` and `catalog:` ranges are resolved.
 
 import { execFileSync } from "node:child_process";
