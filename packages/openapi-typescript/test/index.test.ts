@@ -74,7 +74,7 @@ export type operations = Record<string, never>;`,
       },
     ],
     [
-      "$refs > arbitrary $refs are respected",
+      "$refs > $refs outside generated roots are inlined",
       {
         given: {
           openapi: "3.1",
@@ -110,7 +110,56 @@ export interface components {
         Base: {
             [key: string]: string;
         };
-        SchemaType: components["schemas"]["Base"] | x-swagger-bake["components"]["schemas"]["Extension"];
+        SchemaType: components["schemas"]["Base"] | {
+            [key: string]: unknown;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
+}
+export type $defs = Record<string, never>;
+export type operations = Record<string, never>;`,
+      },
+    ],
+    [
+      "$refs > inlined $refs in properties, and circular ones",
+      {
+        given: {
+          openapi: "3.1",
+          info: { title: "Test", version: "1.0" },
+          components: {
+            schemas: {
+              User: {
+                type: "object",
+                required: ["tag", "node"],
+                properties: {
+                  tag: { $ref: "#/x-shared/Tag" },
+                  node: { $ref: "#/x-shared/Node" },
+                },
+              },
+            },
+          },
+          "x-shared": {
+            Tag: { type: "string", enum: ["a", "b"] },
+            Node: {
+              type: "object",
+              properties: { next: { $ref: "#/x-shared/Node" } },
+            },
+          },
+        },
+        want: `export type paths = Record<string, never>;
+export type webhooks = Record<string, never>;
+export interface components {
+    schemas: {
+        User: {
+            tag: "a" | "b";
+            node: {
+                next?: unknown;
+            };
+        };
     };
     responses: never;
     parameters: never;

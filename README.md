@@ -62,7 +62,11 @@ Declarations (`interface`, `alias`, `raw`) wrap these at the top level. A `Membe
 
 ### The printer rule
 
-Output must match the TypeScript compiler’s printer byte for byte: 4-space indent, multi-line object types and tuples, parentheses inside arrays/unions/intersections, and `escapeNonAsciiString()` escaping. The example snapshots in `packages/openapi-typescript/examples/` (GitHub, Stripe, DigitalOcean, Octokit) enforce this; `vp run update:examples` regenerates them, and any diff there is a formatting change.
+Formatting is frozen at what TypeScript 5.9’s printer produced: 4-space indent, multi-line object types and tuples, parentheses inside arrays/unions/intersections, and `escapeNonAsciiString()` escaping. The example snapshots in `packages/openapi-typescript/examples/` (GitHub, Stripe, DigitalOcean, Octokit) enforce it, not TypeScript, so later TypeScript formatting changes are not followed. `vp run update:examples` regenerates them; any diff there is a formatting change.
+
+### Validity check
+
+Nothing in the AST stops invalid TypeScript (names and literals are printed verbatim), so every test also type-checks its output. `test/typecheck-output.ts` records each `astToString()` call during a test file, wraps fragments as `type T = …;`, and runs `tsc` over them; names the full document would declare (`components`, `paths`, …) are stubbed. A failure lists the `tsc` errors and the offending source.
 
 ## 🔌 openapi-fetch
 
