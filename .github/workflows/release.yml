@@ -1,0 +1,39 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # npm trusted publishing (OIDC)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2 # stage-publish compares versions against HEAD^
+      # Node 24 (.node-version) bundles npm >= 11.15, required for `npm stage publish`
+      - uses: voidzero-dev/setup-vp@v1.21.2
+        with:
+          node-version-file: .node-version
+          cache: true
+      - run: vp run build
+      # With changesets: open/update the "Version Packages" PR
+      - id: changesets
+        uses: changesets/action@v1
+        with:
+          version: vp run version
+          title: "Version Packages"
+          commit: "Version Packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Without changesets: stage new versions on npm; approve each on npmjs.com (2FA)
+      - if: steps.changesets.outputs.hasChangesets == 'false'
+        run: vp run stage-publish

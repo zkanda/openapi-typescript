@@ -9,12 +9,16 @@ catalog:
   vite-plus: 1.3.0
   vitest: 5.0.5
 
-ignoredBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - msw
-  - sharp
-  - svelte-preprocess
+# Vite+ manages Node.js and pnpm versions
+pmOnFail: ignore
+runtimeOnFail: ignore
+
+allowBuilds:
+  '@swc/core': false
+  esbuild: false
+  msw: false
+  sharp: false
+  svelte-preprocess: false
 
 overrides:
   vite@*: 'catalog:'

@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: latest
-      - uses: pnpm/action-setup@v5
-        with:
-          run_install: true
+          cache: true
       - uses: andresz1/size-limit-action@v1.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           package_manager: pnpm
+          # default `npx size-limit` fails under Vite+'s npx shim
+          script: vp exec size-limit --json

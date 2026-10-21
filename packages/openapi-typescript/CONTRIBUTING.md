@@ -20,9 +20,9 @@ However, if adding a feature or breaking change, please **open an issue first to
 
 ### Setup
 
-1. Install [pnpm](https://pnpm.io/)
+1. Install [Vite+](https://viteplus.dev) (`curl -fsSL https://vite.plus | bash`, or `irm https://vite.plus/ps1 | iex` on Windows)
 2. [Fork this repo](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and clone your copy locally
-3. Run `pnpm i` to install dependencies
+3. Run `vp install` to install dependencies
 
 ### Writing code
 
@@ -33,7 +33,7 @@ While best practices for commit messages are encouraged (e.g. start with an impe
 When working locally, run:
 
 ```sh
-pnpm run dev
+vp run dev
 ```
 
 This will compile the code as you change automatically.
@@ -53,7 +53,7 @@ From there, you can refer to existing examples in the codebase. There may even b
 Contributing to this library is hard-bordering-on-impossible without a [test-driven development (TDD)](https://en.wikipedia.org/wiki/Test-driven_development) strategy. If you’re new to this, the basic workflow is:
 
 1. First, write a [test](#testing) that fully outlines what you’d _like_ the output to be.
-2. Next, make sure this test **fails** when you run `npm test` (yes, _fails!_)
+2. Next, make sure this test **fails** when you run `vp run test` (yes, _fails!_)
 3. Then, make changes to `src/` until the tests pass.
 
 Reasoning about code generation can be quite difficult until you “invert your thinking” and approach it output-first. Adopting TDD can turn very unclear/abstract problems into concrete ones with clear steps to resolution.
@@ -75,9 +75,9 @@ All that said, this library should strive to generate _the most predictable_ Typ
 When opening a pull request, make sure all of the following is done:
 
 - [x] Tests are added
-- [x] Build passes (`npm run build`)
-- [x] Tests pass (`npm test`)
-- [x] Linting passes (`npm run lint`)
+- [x] Build passes (`vp run build`)
+- [x] Tests pass (`vp run test`)
+- [x] Linting passes (`vp run lint`)
 
 Lastly, be sure to fill out the complete PR template.
 
@@ -86,7 +86,7 @@ Lastly, be sure to fill out the complete PR template.
 The changelog is generated via [changesets](https://github.com/changesets/changesets), and is separate from Git commit messages and pull request titles. To write a human-readable changelog for your changes, run:
 
 ```
-npx changeset
+vp exec changeset
 ```
 
 This will ask if it’s a `patch`, `minor`, or `major` change ([semver](https://semver.org/)), along with a plain description of what you did. Commit this new file along with the rest of your PR, and during the next release this will go into the official changelog!
@@ -97,32 +97,32 @@ This library uses [Vitest](https://vitest.dev/) for testing. There’s a great [
 
 ### Running tests
 
-💡 The tests test **the production build** in `dist/`. Be sure to run `npm run build` before running tests (or keep `npm run dev` running in the background, which compiles as-you-work)!
+💡 The tests test **the production build** in `dist/`. Be sure to run `vp run build` before running tests (or keep `vp run dev` running in the background, which compiles as-you-work)!
 
 To run the entire test suite once, run:
 
 ```sh
-pnpm test
+vp run test
 ```
 
 To run an individual test:
 
 ```sh
-pnpm test -- [partial filename]
+vp test run [partial filename]
 ```
 
 To start the entire test suite in watch mode:
 
 ```sh
-npx vp test
+vp test
 ```
 
 ### Running linting
 
-Formatting, linting, and type checking are handled via [Vite+](https://viteplus.dev) (Oxfmt, Oxlint, and the TypeScript Go type checker). It was installed with `pnpm i` and can be run with:
+Formatting, linting, and type checking are handled via [Vite+](https://viteplus.dev) (Oxfmt, Oxlint, and the TypeScript Go type checker). Run them with:
 
 ```sh
-pnpm run lint
+vp run lint
 ```
 
 ### Updating snapshot examples
@@ -130,7 +130,7 @@ pnpm run lint
 ⚠️ This may break tests if schemas have been updated
 
 ```sh
-pnpm run update:examples
+vp run update:examples
 ```
 
 ### Unit tests or snapshot tests?
@@ -146,4 +146,4 @@ For most PRs, **snapshot tests can be avoided.** But for scenarios similar to th
 
 ### When I run tests, it’s not picking up my changes
 
-Some tests import the **built package** and not the source file. Be sure to run `pnpm run build` to build the project. You can also run `pnpm run dev` as you work so changes are always up-to-date.
+Some tests import the **built package** and not the source file. Be sure to run `vp run build` to build the project. You can also run `vp run dev` as you work so changes are always up-to-date.

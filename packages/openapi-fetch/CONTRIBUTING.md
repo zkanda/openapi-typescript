@@ -14,9 +14,9 @@ Contributing doesn’t have to be in code. Simply answering questions in open is
 
 ### Setup
 
-1. Install [pnpm](https://pnpm.io/)
+1. Install [Vite+](https://viteplus.dev) (`curl -fsSL https://vite.plus | bash`, or `irm https://vite.plus/ps1 | iex` on Windows)
 2. [Fork this repo](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and clone your copy locally
-3. Run `pnpm i` to install dependencies
+3. Run `vp install` to install dependencies
 
 ### Runtime code vs static type declarations
 
@@ -33,19 +33,19 @@ This library uses [Vitest](https://vitest.dev/) for testing. There’s a great [
 To run the entire test suite, run:
 
 ```sh
-pnpm test
+vp run test
 ```
 
 To run an individual test:
 
 ```sh
-pnpm test -- [partial filename]
+vp test run [partial filename]
 ```
 
 To start the entire test suite in watch mode:
 
 ```sh
-npx vp test
+vp test
 ```
 
 #### Important test-writing tips
@@ -59,10 +59,10 @@ All tests in this project should adhere to the following rules:
 
 ### Linting
 
-Formatting, linting, and type checking are handled via [Vite+](https://viteplus.dev) (Oxfmt, Oxlint, and the TypeScript Go type checker). It was installed with `pnpm i` and can be run with:
+Formatting, linting, and type checking are handled via [Vite+](https://viteplus.dev) (Oxfmt, Oxlint, and the TypeScript Go type checker). Run them with:
 
 ```sh
-pnpm run lint
+vp run lint
 ```
 
 ### Changelogs
@@ -70,7 +70,7 @@ pnpm run lint
 The changelog is generated via [changesets](https://github.com/changesets/changesets), and is separate from Git commit messages and pull request titles. To write a human-readable changelog for your changes, run:
 
 ```
-npx changeset
+vp exec changeset
 ```
 
 This will ask if it’s a `patch`, `minor`, or `major` change ([semver](https://semver.org/)), along with a plain description of what you did. Commit this new file along with the rest of your PR, and during the next release this will go into the official changelog!
