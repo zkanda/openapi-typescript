@@ -1,5 +1,11 @@
 # @zkanda/openapi-typescript
 
+## 8.0.1
+
+### Patch Changes
+
+- b122cc8: Publish from CI via npm trusted publishing. Fix `repository.directory` in `@zkanda/openapi-typescript-helpers`.
+
 ## 8.0.0
 
 ### Major Changes

@@ -1,7 +1,7 @@
 {
   "name": "@zkanda/openapi-typescript-helpers",
   "description": "TypeScript helpers for consuming openapi-typescript types",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "Drew Powers",
     "email": "drew@pow.rs"
