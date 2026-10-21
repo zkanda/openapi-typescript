@@ -21,7 +21,3 @@ Styling fixes are also welcome (contrast improvements, styling bugs, general fro
 - Major rewrites
 
 All of the above are welcome! But if you just opened a PR without discussing the plan ahead-of-time, it will probably be rejected. Be sure to save your own time by talking about big changes first!
-
-## Code of Conduct
-
-All docs edits are held accountable to the [Code of Conduct](../CODE_OF_CONDUCT.md) outlined in this project. Language in the documentation must be inclusive, kind, and respectful.

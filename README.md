@@ -4,6 +4,30 @@
 
 Most code in this fork is written with AI assistance, guided and reviewed thoroughly by [@zkanda](https://github.com/zkanda) before merging.
 
+## ⚡ Development
+
+This monorepo uses [Vite+](https://viteplus.dev) (`vp`). Never call `pnpm`, `npm`, or `npx` directly.
+
+```sh
+curl -fsSL https://vite.plus | bash   # install Vite+ (Windows: irm https://vite.plus/ps1 | iex)
+vp install
+vp run build
+```
+
+| Task                     | Command                                          |
+| :----------------------- | :----------------------------------------------- |
+| Build (watch)            | `vp run dev`                                     |
+| Test all                 | `vp run test`                                    |
+| Test one file            | `vp test run <partial filename>`                 |
+| Format, lint, type check | `vp check`                                       |
+| Update example snapshots | `vp run update:examples` (in openapi-typescript) |
+| Add a changeset          | `vp exec changeset`                              |
+| Add a dependency         | `vp add <pkg>`                                   |
+
+Commands run from the root apply to every package; from `packages/<name>` they apply to that package only.
+
+Tests import the built `dist/`, so rebuild (or keep `vp run dev` running) before testing. `openapi-fetch` tests also need `openapi-typescript` built.
+
 ## 🛠️ How code generation works
 
 openapi-typescript does not depend on the TypeScript compiler. TypeScript 7 dropped the JS API (`ts.factory`, `ts.createPrinter`) the generator used, so [`packages/openapi-typescript/src/lib/ts.ts`](./packages/openapi-typescript/src/lib/ts.ts) holds a minimal type AST and printer of its own.
