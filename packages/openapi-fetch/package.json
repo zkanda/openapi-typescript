@@ -1,7 +1,7 @@
 {
   "name": "@zkanda/openapi-fetch",
   "description": "Fast, type-safe fetch client for your OpenAPI schema. Only 6 kb (min). Works with React, Vue, Svelte, or vanilla JS.",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "author": {
     "name": "Drew Powers",
     "email": "drew@pow.rs"

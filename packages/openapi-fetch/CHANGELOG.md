@@ -1,5 +1,13 @@
 # @zkanda/openapi-fetch
 
+## 0.18.1
+
+### Patch Changes
+
+- b122cc8: Publish from CI via npm trusted publishing. Fix `repository.directory` in `@zkanda/openapi-typescript-helpers`.
+- Updated dependencies [b122cc8]
+  - @zkanda/openapi-typescript-helpers@0.2.1
+
 ## 0.18.0
 
 ### Minor Changes
