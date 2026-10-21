@@ -21,4 +21,4 @@ All content lives in `.md` files that feature normal Markdown content [with powe
 
 ## Contributing
 
-Docs contributions are welcome! Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for additional assistance.
+Docs contributions are welcome! See the [root README](../README.md) for setup.

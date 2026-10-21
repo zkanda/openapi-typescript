@@ -63,3 +63,13 @@ Declarations (`interface`, `alias`, `raw`) wrap these at the top level. A `Membe
 ### The printer rule
 
 Output must match the TypeScript compiler’s printer byte for byte: 4-space indent, multi-line object types and tuples, parentheses inside arrays/unions/intersections, and `escapeNonAsciiString()` escaping. The example snapshots in `packages/openapi-typescript/examples/` (GitHub, Stripe, DigitalOcean, Octokit) enforce this; `vp run update:examples` regenerates them, and any diff there is a formatting change.
+
+## 🔌 openapi-fetch
+
+Types and runtime are written separately: `src/index.d.ts` holds the type inference, `src/index.js` the runtime. Change both together.
+
+Tests check types as well as values:
+
+- Use `assertType<T>(…)` for the inferred type.
+- Use `// @ts-expect-error` to test that invalid input is rejected, scoped to the exact line by splitting the expression.
+- Write type tests out by hand; `test.each` hides errors.
