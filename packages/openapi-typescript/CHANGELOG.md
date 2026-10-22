@@ -1,5 +1,11 @@
 # @zkanda/openapi-typescript
 
+## 8.0.2
+
+### Patch Changes
+
+- fc84177: Inline schemas referenced by a `$ref` outside `paths`, `webhooks`, `components`, and `$defs` (e.g. `#/x-shared/Tag`). These were printed as `x-shared["Tag"]`, which is not valid TypeScript. A circular one becomes `unknown`.
+
 ## 8.0.1
 
 ### Patch Changes
