@@ -14,5 +14,6 @@ export default defineConfig({
     environment: "node",
     clearMocks: true,
     globals: true,
+    setupFiles: ["./test/typecheck-output.ts"],
   },
 });

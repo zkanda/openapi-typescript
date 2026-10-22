@@ -19,8 +19,28 @@ import {
   tsWithRequired,
   UNKNOWN,
 } from "../lib/ts.js";
-import { createDiscriminatorProperty, createRef, getEntries } from "../lib/utils.js";
+import { createDiscriminatorProperty, createRef, getEntries, parseRef } from "../lib/utils.js";
 import type { ReferenceObject, SchemaObject, TransformNodeOptions } from "../types.js";
+
+/** Top-level types that $refs can point into (see transform/index.ts) */
+const GENERATED_ROOTS = new Set(["paths", "webhooks", "components", "$defs"]);
+
+/** $refs being inlined, to stop a self-referencing schema from recursing forever */
+const inlining = new Set<string>();
+
+/** Transform the schema a $ref resolves to in place (`unknown` if unresolvable or circular) */
+function inlineRef($ref: string, options: TransformNodeOptions): TypeNode {
+  const resolved = options.ctx.resolve<SchemaObject>($ref);
+  if (!resolved || inlining.has($ref)) {
+    return UNKNOWN;
+  }
+  inlining.add($ref);
+  try {
+    return transformSchemaObject(resolved, { ...options, path: $ref });
+  } finally {
+    inlining.delete($ref);
+  }
+}
 
 /**
  * Transform SchemaObject nodes (4.8.24)
@@ -53,6 +73,12 @@ export default function transformSchemaObject(
    * ReferenceObject
    */
   if ("$ref" in schemaObject) {
+    // a $ref outside the generated roots (e.g. into an `x-` extension) has no
+    // type to point to, so inline the schema it resolves to
+    const root = parseRef(schemaObject.$ref).pointer[0];
+    if (root !== undefined && !GENERATED_ROOTS.has(root)) {
+      return inlineRef(schemaObject.$ref, options);
+    }
     return oapiRef(schemaObject.$ref);
   }
 
@@ -345,12 +371,7 @@ function transformSchemaObjectCore(schemaObject: SchemaObject, options: Transfor
           name: tsPropertyIndex(k),
           readonly: !!readOnly,
           optional,
-          type: $ref
-            ? oapiRef($ref)
-            : transformSchemaObject(v, {
-                ...options,
-                path: createRef([options.path, k]),
-              }),
+          type: transformSchemaObject(v, { ...options, path: createRef([options.path, k]) }),
         };
         addJSDocComment(v, member);
         coreObjectType.push(member);
